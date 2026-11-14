@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "paths": {
+      "monocon": ["../src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}
