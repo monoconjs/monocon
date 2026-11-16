@@ -6,12 +6,18 @@ import * as ts from 'typescript'
 
 export interface MonoconConfig {
   entry: string[]
+  build?: {
+    outDir?: string
+  }
 }
 
 export interface LoadedConfig {
   path: string
   entry: string[]
+  outDir: string
 }
+
+export const DEFAULT_OUT_DIR = '.monocon-dist'
 
 export function defineConfig(config: MonoconConfig): MonoconConfig {
   return config
@@ -39,10 +45,12 @@ export async function loadConfig(path: string): Promise<LoadedConfig> {
   const expression = findDefaultExport(source, path)
   const object = unwrapConfig(expression, path)
   const entry = readEntry(object, path)
+  const outDir = readOutDir(object)
 
   return {
     path,
     entry: entry.map((item) => resolve(dirname(path), item)),
+    outDir: resolve(dirname(path), outDir),
   }
 }
 
@@ -90,6 +98,28 @@ function readEntry(object: ts.ObjectLiteralExpression, path: string): string[] {
   if (entry.length === 0) throw new Error(`entry is empty in ${path}`)
 
   return entry
+}
+
+function readOutDir(object: ts.ObjectLiteralExpression): string {
+  const build = object.properties.find(
+    (item) => ts.isPropertyAssignment(item) && propertyName(item.name) === 'build',
+  )
+  if (
+    !build ||
+    !ts.isPropertyAssignment(build) ||
+    !ts.isObjectLiteralExpression(build.initializer)
+  ) {
+    return DEFAULT_OUT_DIR
+  }
+
+  const outDir = build.initializer.properties.find(
+    (item) => ts.isPropertyAssignment(item) && propertyName(item.name) === 'outDir',
+  )
+  if (!outDir || !ts.isPropertyAssignment(outDir) || !ts.isStringLiteral(outDir.initializer)) {
+    return DEFAULT_OUT_DIR
+  }
+
+  return outDir.initializer.text
 }
 
 function propertyName(name: ts.PropertyName): string | undefined {
