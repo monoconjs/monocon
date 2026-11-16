@@ -34,11 +34,11 @@ jobs:
             exit 1
           fi
 
+      - run: pnpm build
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm build
       - run: pnpm check:package
 
       - run: pnpm publish --access public --provenance --no-git-checks

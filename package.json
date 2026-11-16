@@ -1,9 +1,23 @@
 {
   "name": "monocon",
-  "version": "0.0.0",
-  "description": "",
-  "keywords": [],
+  "version": "0.0.1",
+  "description": "A web-standard HTTP framework for TypeScript with typed, chainable endpoints and middleware-provided context inference.",
+  "keywords": [
+    "framework",
+    "http",
+    "middleware",
+    "routing",
+    "typescript",
+    "web-standard",
+    "zod"
+  ],
+  "homepage": "https://github.com/monoconjs/monocon#readme",
+  "bugs": "https://github.com/monoconjs/monocon/issues",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monoconjs/monocon.git"
+  },
   "files": [
     "dist"
   ],
