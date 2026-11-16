@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@monocon/cli':
+        specifier: latest
+        version: 0.0.1
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -66,9 +69,6 @@ importers:
 
   playground:
     devDependencies:
-      '@monocon/cli':
-        specifier: workspace:*
-        version: link:../cli
       monocon:
         specifier: workspace:*
         version: link:..
@@ -295,6 +295,11 @@ packages:
 
   '@loaderkit/resolve@1.0.6':
     resolution: {integrity: sha512-G8FdIoF5CypfwmD9rl8BXod5HDn8JqB0CCNBXDTaRZ+yRYhARrrSToX1zg1zy9jX3zLqigsELwhT4gNtkdQAUg==}
+
+  '@monocon/cli@0.0.1':
+    resolution: {integrity: sha512-TzeSUCm0TGkZaz+0PF0KcB2/wOqLXtcQS7ooLlTfaGV6tu/F3/FtV8pejdyR9wSsl6MkAA+7M91vVabbnNTj7w==}
+    engines: {node: '>=22'}
+    hasBin: true
 
   '@napi-rs/wasm-runtime@1.2.6':
     resolution: {integrity: sha512-mRyDmEw9/fCDXCGfL1sbgIw/GUK0PVxRW4YwgPN61F3LQ+fSyoBFarJVzgGyhF6kRzEQZ0FejDqm4WLXSeqQmw==}
@@ -1783,6 +1788,13 @@ snapshots:
   '@loaderkit/resolve@1.0.6':
     dependencies:
       '@braidai/lang': 1.1.2
+
+  '@monocon/cli@0.0.1':
+    dependencies:
+      cac: 6.7.14
+      execa: 9.6.1
+      tinyglobby: 0.2.17
+      typescript: 5.9.3
 
   '@napi-rs/wasm-runtime@1.2.6(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)':
     dependencies:

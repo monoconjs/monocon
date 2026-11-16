@@ -4,7 +4,8 @@
     "declaration": false,
     "paths": {
       "monocon": ["../src/index.ts"],
-      "monocon/global": ["../src/global.ts"]
+      "monocon/global": ["../src/global.ts"],
+      "monocon/config": ["../src/config.ts"]
     }
   },
   "include": ["src", ".monocon/*.d.ts"]

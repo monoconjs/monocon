@@ -17,7 +17,7 @@ function formatDist() {
 }
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/global.ts'],
+  entry: ['src/index.ts', 'src/global.ts', 'src/config.ts'],
   outDir,
   format: ['esm', 'cjs'],
   platform: 'node',
