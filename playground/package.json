@@ -5,10 +5,12 @@
   "description": "Playground.",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "dev": "monocon gen tsx watch src/index.ts",
+    "gen": "monocon gen",
+    "typecheck": "monocon gen && tsc --noEmit"
   },
   "devDependencies": {
+    "@monocon/cli": "workspace:*",
     "tsx": "^4.20.6"
   }
 }

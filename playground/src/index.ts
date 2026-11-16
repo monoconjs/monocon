@@ -1,20 +1,10 @@
-import { all, del, get, head, middleware, options, patch, post, put } from 'monocon'
+import { all, del, get, head, options, patch, post, put } from 'monocon'
 import { z } from 'zod'
 
-const logger = middleware('*', {
-  onRequest: () => ({ requestId: 'req-1' }),
-  onResponse: (_ctx, response) => response,
-})
+import { auth } from './middlewares/auth.ts'
+import { logger } from './middlewares/logger.ts'
 
-const auth = middleware(
-  { include: ['/admin/*'], exclude: ['/admin/public/*'] },
-  {
-    onRequest: () => ({ user: 'alice', role: 'admin' as const }),
-    beforeHandle: () => ({ checkedAt: Date.now() }),
-  },
-)
-
-const getUser = get('/users/:id', {
+export const getUser = get('/users/:id', {
   params: z.object({ id: z.coerce.number() }),
   query: z.object({ page: z.coerce.number().default(1) }),
   response: z.object({
@@ -25,28 +15,33 @@ const getUser = get('/users/:id', {
   .onRequest(() => ({ traceId: 'trace-1' }))
   .beforeHandle((ctx) => ({ requestedBy: ctx.traceId }))
   .handle((ctx) => ({
-    data: { id: ctx.params.id, name: ctx.requestedBy },
+    data: { id: ctx.params.id, name: ctx.requestedBy, _id: ctx.requestId },
   }))
   .afterHandle((_ctx, result) => result)
   .onResponse((_ctx, response) => response)
 
-const createUser = post('/users', {
+export const createUser = post('/users', {
   body: z.object({ name: z.string(), email: z.string() }),
   response: z.object({ id: z.number(), name: z.string() }),
   meta: { tags: ['Users'] },
 }).handle((ctx) => ({ id: 1, name: ctx.body.name }))
 
-const health = get('/health').handle(() => ({ status: 'ok' }))
+export const health = get('/health').handle(() => ({ status: 'ok' }))
 
-const updateUser = put('/users/:id', {
+export const adminUsers = get('/admin/users').handle((ctx) => ({
+  user: ctx.user,
+  role: ctx.role,
+}))
+
+export const updateUser = put('/users/:id', {
   params: z.object({ id: z.coerce.number() }),
 }).handle((ctx) => ({ id: ctx.params.id }))
 
-const deleteUser = del('/users/:id').handle(() => ({ ok: true }))
-const patchUser = patch('/users/:id').handle(() => ({ ok: true }))
-const headRoot = head('/').handle(() => undefined)
-const optionsRoot = options('/').handle(() => ({ allow: 'GET, POST' }))
-const fallback = all('*').handle(() => ({ notFound: true }))
+export const deleteUser = del('/users/:id').handle(() => ({ ok: true }))
+export const patchUser = patch('/users/:id').handle(() => ({ ok: true }))
+export const headRoot = head('/').handle(() => undefined)
+export const optionsRoot = options('/').handle(() => ({ allow: 'GET, POST' }))
+export const fallback = all('*').handle(() => ({ notFound: true }))
 
 console.log({
   logger,

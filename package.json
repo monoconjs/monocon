@@ -21,13 +21,23 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
+    },
+    "./global": {
+      "import": {
+        "types": "./dist/global.d.mts",
+        "default": "./dist/global.mjs"
+      },
+      "require": {
+        "types": "./dist/global.d.cts",
+        "default": "./dist/global.cjs"
+      }
     }
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && pnpm -r build",
     "check:package": "publint && attw --pack .",
-    "typecheck": "tsc --noEmit && pnpm --filter playground typecheck",
-    "test": "vitest run",
+    "typecheck": "tsc --noEmit && pnpm -r typecheck",
+    "test": "vitest run && pnpm -r test",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "oxlint",
