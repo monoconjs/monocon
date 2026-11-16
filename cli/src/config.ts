@@ -28,7 +28,9 @@ export async function expandEntries(patterns: string[]): Promise<string[]> {
     patterns.map(async (pattern) => {
       if (!/[*?[\]{}]/.test(pattern)) return [pattern]
 
-      const files = await glob(pattern, { absolute: true })
+      // glob expects POSIX separators, but resolve() emits backslashes on Windows
+      const normalized = pattern.replaceAll('\\', '/')
+      const files = await glob(normalized, { absolute: true })
       return files.map((file) => resolve(file))
     }),
   )
