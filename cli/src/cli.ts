@@ -41,11 +41,13 @@ export async function run(argv: string[]): Promise<void> {
 async function runGen(cwd: string, config: string, passthrough: string[]): Promise<void> {
   const generated = await generate(cwd, config)
 
-  for (const warning of generated.warnings) console.warn(`warning: ${warning}`)
+  for (const warning of generated.warnings) console.warn(`[monocon] warning: ${warning}`)
 
   const endpoints = generated.declarations.filter((item) => item.kind === 'endpoint').length
   const middlewares = generated.declarations.length - endpoints
-  console.log(`Generated .monocon from ${endpoints} endpoint(s) and ${middlewares} middleware(s)`)
+  console.log(
+    `[monocon] Generated .monocon from ${endpoints} endpoint(s) and ${middlewares} middleware(s)`,
+  )
 
   if (passthrough.length === 0) return
 
@@ -61,7 +63,7 @@ async function runGen(cwd: string, config: string, passthrough: string[]): Promi
     })
     process.exitCode = child.exitCode ?? 0
   } catch (error) {
-    console.error(error instanceof Error ? error.message : error)
+    console.error(`[monocon] ${error instanceof Error ? error.message : String(error)}`)
     process.exitCode = 1
   }
 }
