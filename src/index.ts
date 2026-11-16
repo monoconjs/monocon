@@ -1,5 +1,9 @@
 export * from './endpoint.ts'
 export * from './middleware.ts'
+export * from './context.ts'
+export * from './pattern.ts'
+export * from './validation.ts'
+export * from './execute.ts'
 
 export * from './types/endpoint.ts'
 export type * from './global.ts'

@@ -72,9 +72,6 @@ function createBuilder<
     },
   }
 
-  // The runtime builder is a single mutable object; its concrete method
-  // signatures implement the type-level stage machine, so a cast is required
-  // at the boundary between the runtime value and its phantom types.
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return builder as unknown as EndpointBuilder<'onRequest', EndpointState<Method, Path, Options>>
 }
