@@ -1,4 +1,4 @@
-import type { MaybePromise, Merge, Simplify } from './_utils.ts'
+import type { MaybePromise, Merge, ProvidedOfHook, Simplify } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 import type { EndpointMethod } from './http.ts'
 import type { MiddlewareFor } from './middleware.ts'
@@ -91,15 +91,7 @@ export type EndpointHook<State extends EndpointState> = (
   ctx: EndpointContext<State>,
 ) => MaybePromise<object | Response | void>
 
-export type ProvidedOfHook<Fn> = Fn extends (...args: any[]) => infer Result
-  ? Exclude<Awaited<Result>, Response | void | null | undefined> extends infer Provided
-    ? Provided extends object
-      ? [keyof Provided] extends [never]
-        ? {}
-        : Provided
-      : {}
-    : {}
-  : {}
+export type { ProvidedOfHook } from './_utils.ts'
 
 export type EndpointResult<Options extends EndpointOptions> =
   | Response

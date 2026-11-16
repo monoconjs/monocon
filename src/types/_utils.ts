@@ -9,3 +9,13 @@ export type UnionToIntersection<Union> = (
 ) extends (value: infer Result) => void
   ? Result
   : never
+
+export type ProvidedOfHook<Fn> = Fn extends (...args: any[]) => infer Result
+  ? Exclude<Awaited<Result>, Response | void | null | undefined> extends infer Provided
+    ? Provided extends object
+      ? [keyof Provided] extends [never]
+        ? {}
+        : Provided
+      : {}
+    : {}
+  : {}

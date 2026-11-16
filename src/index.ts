@@ -1,4 +1,5 @@
 export * from './endpoint.ts'
+export * from './middleware.ts'
 
 export * from './types/endpoint.ts'
 export type * from './global.ts'
