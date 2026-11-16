@@ -7,5 +7,5 @@
       "monocon/global": ["../src/global.ts"]
     }
   },
-  "include": ["src", ".monocon/types.d.ts"]
+  "include": ["src", ".monocon/*.d.ts"]
 }

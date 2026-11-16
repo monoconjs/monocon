@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "monocon gen tsx watch src/index.ts",
     "gen": "monocon gen",
-    "typecheck": "monocon gen && tsc --noEmit"
+    "typecheck": "monocon gen && tsc --noEmit",
+    "build": "monocon build && tsdown",
+    "start": "node dist/index.mjs"
   },
   "devDependencies": {
     "@monocon/cli": "workspace:*",
