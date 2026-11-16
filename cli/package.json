@@ -1,6 +1,6 @@
 {
   "name": "@monocon/cli",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Codegen CLI for monocon.",
   "license": "MIT",
   "bin": {
@@ -11,6 +11,8 @@
     "dist"
   ],
   "type": "module",
+  "main": "./dist/config.mjs",
+  "types": "./dist/config.d.mts",
   "exports": {
     ".": {
       "types": "./dist/config.d.mts",
