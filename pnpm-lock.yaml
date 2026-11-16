@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@monocon/cli':
         specifier: latest
-        version: 0.0.1
+        version: 0.0.2
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -296,8 +296,8 @@ packages:
   '@loaderkit/resolve@1.0.6':
     resolution: {integrity: sha512-G8FdIoF5CypfwmD9rl8BXod5HDn8JqB0CCNBXDTaRZ+yRYhARrrSToX1zg1zy9jX3zLqigsELwhT4gNtkdQAUg==}
 
-  '@monocon/cli@0.0.1':
-    resolution: {integrity: sha512-TzeSUCm0TGkZaz+0PF0KcB2/wOqLXtcQS7ooLlTfaGV6tu/F3/FtV8pejdyR9wSsl6MkAA+7M91vVabbnNTj7w==}
+  '@monocon/cli@0.0.2':
+    resolution: {integrity: sha512-IBp5I/QmQvrPi/VF84xgBH7eUxyX2NTZPT5YBkKf4/AtxtOTi6MeIsDS3b92Ebra7IEyRj45mlGD3dFEwhC2cA==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -1789,7 +1789,7 @@ snapshots:
     dependencies:
       '@braidai/lang': 1.1.2
 
-  '@monocon/cli@0.0.1':
+  '@monocon/cli@0.0.2':
     dependencies:
       cac: 6.7.14
       execa: 9.6.1

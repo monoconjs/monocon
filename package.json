@@ -91,7 +91,7 @@
       "oxfmt --write"
     ],
     "*.{json,jsonc,md,yml,yaml}": [
-      "oxfmt --write"
+      "oxfmt --write --no-error-on-unmatched-pattern"
     ]
   },
   "engines": {
