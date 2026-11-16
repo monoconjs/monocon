@@ -1,3 +1,5 @@
+export * from './endpoint.ts'
+
 export * from './types/endpoint.ts'
 export type * from './global.ts'
 export type * from './types/context.ts'

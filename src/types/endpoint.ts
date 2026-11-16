@@ -194,14 +194,3 @@ export type EndpointFactory<Method extends EndpointMethod> = <
   path: Path,
   options?: Options,
 ) => EndpointBuilder<'onRequest', EndpointState<Method, Path, Options>>
-
-export declare const get: EndpointFactory<'GET'>
-export declare const post: EndpointFactory<'POST'>
-export declare const put: EndpointFactory<'PUT'>
-export declare const patch: EndpointFactory<'PATCH'>
-export declare const del: EndpointFactory<'DELETE'>
-export declare const head: EndpointFactory<'HEAD'>
-export declare const options: EndpointFactory<'OPTIONS'>
-export declare const all: EndpointFactory<'ALL'>
-
-export { del as delete }
