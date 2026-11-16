@@ -8,12 +8,10 @@ import { createMatcher } from '../src/matcher.ts'
 import type { RuntimeMiddleware } from '../src/middleware.ts'
 
 function asEndpoint(value: unknown): RuntimeEndpoint {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return value as RuntimeEndpoint
 }
 
 function asMiddleware(value: unknown): RuntimeMiddleware {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return value as RuntimeMiddleware
 }
 

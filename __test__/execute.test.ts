@@ -1,4 +1,3 @@
-// oxlint-disable typescript/no-unsafe-type-assertion
 import { z } from 'zod'
 
 import type { RuntimeEndpoint } from '../src/endpoint.ts'

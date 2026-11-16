@@ -17,9 +17,10 @@
   },
   "overrides": [
     {
-      "files": ["__test__/**/*.ts"],
+      "files": ["**/__test__/**/*.ts"],
       "rules": {
-        "no-console": "off"
+        "no-console": "off",
+        "typescript/no-unsafe-type-assertion": "off"
       }
     }
   ],

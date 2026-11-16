@@ -3,7 +3,6 @@ import { createMatcher } from '../src/matcher.ts'
 import type { EndpointMethod } from '../src/types/http.ts'
 
 function endpoint(method: EndpointMethod, path: string): RuntimeEndpoint {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return { '~method': method, '~path': path } as RuntimeEndpoint
 }
 
