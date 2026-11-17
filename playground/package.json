@@ -12,6 +12,7 @@
     "start": "node dist/index.mjs"
   },
   "devDependencies": {
+    "@monocon/cli": "workspace:*",
     "monocon": "workspace:*",
     "tsx": "^4.20.6"
   }

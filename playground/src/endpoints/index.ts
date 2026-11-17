@@ -1,6 +1,8 @@
 import { all, del, get, head, options, patch, post, put } from 'monocon'
 import { z } from 'zod'
 
+import { CustomError } from '../errors/index.ts'
+
 export const getUser = get('/users/:id', {
   params: z.object({ id: z.coerce.number() }),
   query: z.object({ page: z.coerce.number().default(1) }),
@@ -11,9 +13,12 @@ export const getUser = get('/users/:id', {
 })
   .onRequest(() => ({ traceId: 'trace-1' }))
   .beforeHandle((ctx) => ({ requestedBy: ctx.traceId }))
-  .handle((ctx) => ({
-    data: { id: ctx.params.id, name: ctx.requestedBy, _id: ctx.requestId },
-  }))
+  .handle((ctx) => {
+    throw CustomError({ path: ctx.url.toString() })
+    // return {
+    //   data: { id: ctx.params.id, name: ctx.requestedBy, _id: ctx.requestId },
+    // }
+  })
   .afterHandle((_ctx, result) => result)
   .onResponse((_ctx, response) => response)
 

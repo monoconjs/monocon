@@ -4,7 +4,6 @@ import type { RuntimeEndpoint } from '../src/endpoint.ts'
 import { execute } from '../src/index.ts'
 import { get } from '../src/index.ts'
 import { middleware } from '../src/index.ts'
-import { ValidationError } from '../src/index.ts'
 import type { RuntimeMiddleware } from '../src/middleware.ts'
 
 function asEndpoint(value: unknown): RuntimeEndpoint {
@@ -76,15 +75,18 @@ describe('execute', () => {
     expect(await response.json()).toEqual({ id: 42, page: 3 })
   })
 
-  it('throws ValidationError when a schema fails', async () => {
+  it('returns a 400 response when a schema fails', async () => {
     const endpoint = asEndpoint(
       get('/users/:id', {
         params: z.object({ id: z.coerce.number() }),
       }).handle((ctx) => ({ id: ctx.params.id })),
     )
 
-    await expect(execute(endpoint, request('/users/abc'))).rejects.toBeInstanceOf(ValidationError)
-    await expect(execute(endpoint, request('/users/abc'))).rejects.toMatchObject({
+    const response = await execute(endpoint, request('/users/abc'))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toMatchObject({
+      name: 'VALIDATION_ERROR',
       location: 'params',
     })
   })

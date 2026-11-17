@@ -2,7 +2,7 @@ import type { StandardSchemaIssue } from './types/schema.ts'
 
 export interface EndpointMiddlewareContext {}
 
-// ErrorMap maps code -> body type (generated entries use `(typeof X)['~body']`).
+// ErrorMap maps name -> error type (generated entries use `(typeof X)['~payload']`).
 export interface ErrorMap {
   VALIDATION_ERROR: readonly StandardSchemaIssue[]
   PARSE_ERROR: unknown

@@ -6,8 +6,10 @@ import {
   type RuntimeContext,
 } from './context.ts'
 import type { EndpointLifecycle, RuntimeEndpoint } from './endpoint.ts'
+import { NoHandlerError, ParseError, handleError } from './errors/index.ts'
 import type { RuntimeMiddleware } from './middleware.ts'
 import { matchMiddlewares } from './pattern.ts'
+import type { ErrorStage } from './types/error.ts'
 import { validate } from './validation.ts'
 
 type Hook = (...args: any[]) => any
@@ -23,52 +25,88 @@ export async function execute(
 ): Promise<Response> {
   const url = new URL(request.url)
   const optionsOf = endpoint['~options']
-
-  const rawParams = extractParams(endpoint['~path'], url.pathname)
-  const params = await validate('params', optionsOf.params, rawParams)
-  const searchParams = parseQuery(url)
-  const query = await validate(
-    'query',
-    optionsOf.query,
-    optionsOf.query ? Object.fromEntries(searchParams) : searchParams,
-  )
-  const body = await validate('body', optionsOf.body, await parseBody(request))
-  const headers = await validate('headers', optionsOf.headers, Object.fromEntries(request.headers))
-
-  const ctx = createContext({
-    req: request,
-    url,
-    params: isProvided(params) ? params : rawParams,
-    query,
-    body,
-    meta: optionsOf.meta ?? {},
-  })
-  if (isProvided(headers)) Object.assign(ctx.headers, headers)
-
   const middlewares = matchMiddlewares(options.middlewares ?? [], endpoint['~path'])
-  const handler = endpoint['~handler']
-  if (!handler)
-    throw new Error(`Endpoint ${endpoint['~method']} ${endpoint['~path']} has no handler`)
 
-  const shortCircuit = await runBeforeHooks(
-    [...middlewareHooks(middlewares, 'onRequest'), ...endpoint['~hooks'].onRequest],
-    ctx,
-  )
-  if (shortCircuit) return finalize(shortCircuit, ctx, endpoint, middlewares)
+  let stage: ErrorStage = 'validation'
+  let ctx: RuntimeContext | undefined
 
-  const beforeResult = await runBeforeHooks(
-    [...middlewareHooks(middlewares, 'beforeHandle'), ...endpoint['~hooks'].beforeHandle],
-    ctx,
-  )
-  if (beforeResult) return finalize(beforeResult, ctx, endpoint, middlewares)
+  try {
+    const rawParams = extractParams(endpoint['~path'], url.pathname)
+    const params = await validate('params', optionsOf.params, rawParams)
+    const searchParams = parseQuery(url)
+    const query = await validate(
+      'query',
+      optionsOf.query,
+      optionsOf.query ? Object.fromEntries(searchParams) : searchParams,
+    )
+    const parsedBody = await parseBody(request).catch((cause: unknown) => {
+      throw ParseError({ message: cause instanceof Error ? cause.message : String(cause) })
+    })
+    const body = await validate('body', optionsOf.body, parsedBody)
+    const headers = await validate(
+      'headers',
+      optionsOf.headers,
+      Object.fromEntries(request.headers),
+    )
 
-  const result = await runAfterHooks(
-    [...endpoint['~hooks'].afterHandle, ...middlewareHooks(middlewares, 'afterHandle')],
-    ctx,
-    await handler(ctx),
-  )
+    ctx = createContext({
+      req: request,
+      url,
+      params: isProvided(params) ? params : rawParams,
+      query,
+      body,
+      meta: optionsOf.meta ?? {},
+    })
+    if (isProvided(headers)) Object.assign(ctx.headers, headers)
 
-  return finalize(toResponse(result), ctx, endpoint, middlewares)
+    const handler = endpoint['~handler']
+    if (!handler) {
+      throw NoHandlerError({ method: endpoint['~method'], path: endpoint['~path'] })
+    }
+
+    stage = 'onRequest'
+    const shortCircuit = await runBeforeHooks(
+      [...middlewareHooks(middlewares, 'onRequest'), ...endpoint['~hooks'].onRequest],
+      ctx,
+    )
+    if (shortCircuit) {
+      stage = 'onResponse'
+      return finalize(shortCircuit, ctx, endpoint, middlewares)
+    }
+
+    stage = 'beforeHandle'
+    const beforeResult = await runBeforeHooks(
+      [...middlewareHooks(middlewares, 'beforeHandle'), ...endpoint['~hooks'].beforeHandle],
+      ctx,
+    )
+    if (beforeResult) {
+      stage = 'onResponse'
+      return finalize(beforeResult, ctx, endpoint, middlewares)
+    }
+
+    stage = 'handle'
+    const handled = await handler(ctx)
+
+    stage = 'afterHandle'
+    const result = await runAfterHooks(
+      [...endpoint['~hooks'].afterHandle, ...middlewareHooks(middlewares, 'afterHandle')],
+      ctx,
+      handled,
+    )
+
+    stage = 'onResponse'
+    return finalize(toResponse(result), ctx, endpoint, middlewares)
+  } catch (error) {
+    return handleError({
+      error,
+      request,
+      url,
+      context: ctx,
+      endpoint,
+      middlewares,
+      stage,
+    })
+  }
 }
 
 async function finalize(

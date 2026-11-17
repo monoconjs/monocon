@@ -50,6 +50,7 @@ export interface ErrorDecl {
   readonly kind: 'error'
   readonly file: string
   readonly exportName: string
+  readonly name: string | undefined
 }
 
 export type Declaration = EndpointDecl | MiddlewareDecl | ErrorDecl
@@ -103,6 +104,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
           kind: 'error',
           file,
           exportName: binding.exportName,
+          name: readErrorName(factory.call, file, warnings),
         })
         continue
       }
@@ -152,6 +154,25 @@ function readPath(call: ts.CallExpression, file: string, warnings: string[]): st
   if (argument && ts.isStringLiteral(argument)) return argument.text
 
   warnings.push(`endpoint path in ${relative(process.cwd(), file)} must be a string literal`)
+  return undefined
+}
+
+function readErrorName(
+  call: ts.CallExpression,
+  file: string,
+  warnings: string[],
+): string | undefined {
+  const [argument] = call.arguments
+  if (!argument || !ts.isObjectLiteralExpression(argument)) return undefined
+
+  const property = argument.properties.find(
+    (item) => ts.isPropertyAssignment(item) && propertyName(item.name) === 'name',
+  )
+  if (!property || !ts.isPropertyAssignment(property)) return undefined
+
+  if (ts.isStringLiteral(property.initializer)) return property.initializer.text
+
+  warnings.push(`error name in ${relative(process.cwd(), file)} must be a string literal`)
   return undefined
 }
 

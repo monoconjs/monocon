@@ -11,7 +11,7 @@ declare module '../src/global.ts' {
 }
 
 describe('error types', () => {
-  it('code is a literal union from the error map', () => {
+  it('name is a literal union from the error map', () => {
     expectTypeOf<ErrorCode>().toEqualTypeOf<
       | 'VALIDATION_ERROR'
       | 'PARSE_ERROR'
@@ -34,16 +34,16 @@ describe('error types', () => {
     expectTypeOf<StatusOf<'CONFLICT_ERROR'>>().toEqualTypeOf<409>()
   })
 
-  it('error context narrows error and status by code', () => {
+  it('error context narrows error and status by name', () => {
     const ctx = null as unknown as ErrorContextOf<'CONFLICT_ERROR'>
-    expectTypeOf(ctx.code).toEqualTypeOf<'CONFLICT_ERROR'>()
-    expectTypeOf(ctx.error).toEqualTypeOf<{ reason: string; retryAfter: number }>()
+    expectTypeOf(ctx.name).toEqualTypeOf<'CONFLICT_ERROR'>()
+    expectTypeOf(ctx.payload).toEqualTypeOf<{ reason: string; retryAfter: number }>()
     expectTypeOf(ctx.status).toEqualTypeOf<409>()
   })
 
-  it('deps narrow the handler context to selected codes', () => {
+  it('deps narrow the handler context to selected names', () => {
     const ctx = null as unknown as ErrorContextOf<'VALIDATION_ERROR' | 'CONFLICT_ERROR'>
-    expectTypeOf(ctx.code).toEqualTypeOf<'VALIDATION_ERROR' | 'CONFLICT_ERROR'>()
+    expectTypeOf(ctx.name).toEqualTypeOf<'VALIDATION_ERROR' | 'CONFLICT_ERROR'>()
   })
 
   it('carries context stage', () => {

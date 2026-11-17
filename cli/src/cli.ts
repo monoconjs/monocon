@@ -62,9 +62,10 @@ async function runGen(cwd: string, config: string, passthrough: string[]): Promi
   for (const warning of generated.warnings) console.warn(`[monocon] warning: ${warning}`)
 
   const endpoints = generated.declarations.filter((item) => item.kind === 'endpoint').length
-  const middlewares = generated.declarations.length - endpoints
+  const middlewares = generated.declarations.filter((item) => item.kind === 'middleware').length
+  const errors = generated.declarations.filter((item) => item.kind === 'error').length
   console.log(
-    `[monocon] Generated .monocon from ${endpoints} endpoint(s) and ${middlewares} middleware(s)`,
+    `[monocon] Generated .monocon from ${endpoints} endpoint(s), ${middlewares} middleware(s) and ${errors} error(s)`,
   )
 
   if (passthrough.length === 0) return
