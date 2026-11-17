@@ -83,4 +83,37 @@ describe('createFetchHandler', () => {
 
     expect(seen).toMatchObject({ requestId: 'r1' })
   })
+
+  it('runs global middleware onResponse hooks for an unmatched route', async () => {
+    const header = asMiddleware(
+      middleware('*', {
+        onResponse: (_ctx, response) => {
+          response.headers.set('x-trace', 'r1')
+          return response
+        },
+      }),
+    )
+    const handler = createFetchHandler(createMatcher([]), [header])
+
+    const response = await handler(new Request('http://localhost/missing'))
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('x-trace')).toBe('r1')
+  })
+
+  it('runs onRequest hooks for an unmatched route', async () => {
+    let seen = false
+    const probe = asMiddleware(
+      middleware('*', {
+        onRequest: () => {
+          seen = true
+        },
+      }),
+    )
+    const handler = createFetchHandler(createMatcher([]), [probe])
+
+    await handler(new Request('http://localhost/missing'))
+
+    expect(seen).toBe(true)
+  })
 })

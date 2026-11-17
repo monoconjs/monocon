@@ -11,13 +11,14 @@ interface RegisteredHandler {
 
 const globalHandlers: RegisteredHandler[] = []
 
+export function onError(handler: ErrorHandlerOf<ErrorCode>, deps: readonly []): void
 export function onError<const Names extends readonly ErrorCode[]>(
   handler: ErrorHandlerOf<Names[number]>,
   deps: Names,
 ): void
 export function onError(handler: ErrorHandlerOf<ErrorCode>): void
 export function onError(handler: ErrorHandlerOf<ErrorCode>, deps?: readonly ErrorCode[]): void {
-  globalHandlers.push({ handler, names: deps })
+  globalHandlers.push({ handler, names: deps?.length ? deps : undefined })
 }
 
 export function clearErrorHandlers(): void {
