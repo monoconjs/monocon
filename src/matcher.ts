@@ -4,28 +4,35 @@ export interface Matcher {
   readonly match: (method: string, path: string) => RuntimeEndpoint | undefined
 }
 
+interface Candidate {
+  readonly endpoint: RuntimeEndpoint
+  readonly method: string
+  readonly patternParts: readonly string[]
+}
+
 export function createMatcher(endpoints: readonly RuntimeEndpoint[]): Matcher {
-  const routes = endpoints.map((endpoint) => ({
+  const candidates: Candidate[] = endpoints.map((endpoint) => ({
     endpoint,
     method: endpoint['~method'],
-    path: endpoint['~path'],
+    patternParts: splitPath(endpoint['~path']),
   }))
 
   return {
     match(method, path) {
+      const pathParts = splitPath(path)
       let best: RuntimeEndpoint | undefined
       let bestScore = -1
 
-      for (const route of routes) {
-        const exact = route.method === method
-        if (!exact && route.method !== 'ALL') continue
+      for (const candidate of candidates) {
+        const exact = candidate.method === method
+        if (!exact && candidate.method !== 'ALL') continue
 
-        const score = pathScore(route.path, path)
+        const score = pathScore(candidate.patternParts, pathParts)
         if (score === undefined) continue
 
         const total = (exact ? 1000 : 0) + score
         if (total > bestScore) {
-          best = route.endpoint
+          best = candidate.endpoint
           bestScore = total
         }
       }
@@ -35,9 +42,10 @@ export function createMatcher(endpoints: readonly RuntimeEndpoint[]): Matcher {
   }
 }
 
-function pathScore(pattern: string, path: string): number | undefined {
-  const patternParts = splitPath(pattern)
-  const pathParts = splitPath(path)
+function pathScore(
+  patternParts: readonly string[],
+  pathParts: readonly string[],
+): number | undefined {
   let score = 0
 
   for (let index = 0; index < patternParts.length; index++) {
