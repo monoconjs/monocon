@@ -24,7 +24,7 @@
       }
     }
   ],
-  "ignorePatterns": ["dist", "coverage", "node_modules", "**/.monocon/**"],
+  "ignorePatterns": ["dist", "coverage", "node_modules"],
   "options": {
     "typeAware": true,
     "typeCheck": true
