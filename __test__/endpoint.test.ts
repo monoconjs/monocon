@@ -1,5 +1,5 @@
+import type { RuntimeEndpoint } from '../src/endpoint.ts'
 import * as monocon from '../src/index.ts'
-import type { RuntimeEndpoint } from '../src/index.ts'
 
 const onRequestA = () => ({ a: 1 })
 const onRequestB = () => ({ b: 2 })

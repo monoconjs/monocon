@@ -1,5 +1,5 @@
 import * as monocon from '../src/index.ts'
-import type { RuntimeMiddleware } from '../src/index.ts'
+import type { RuntimeMiddleware } from '../src/middleware.ts'
 
 const onRequest = () => ({ requestId: 'r1' })
 const beforeHandle = () => ({ userId: 1 })

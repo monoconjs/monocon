@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import type { RuntimeEndpoint } from '../src/endpoint.ts'
-import { execute } from '../src/index.ts'
+import { execute } from '../src/execute.ts'
 import { get } from '../src/index.ts'
 import { middleware } from '../src/index.ts'
 import type { RuntimeMiddleware } from '../src/middleware.ts'

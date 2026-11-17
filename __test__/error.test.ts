@@ -1,18 +1,20 @@
 import { z } from 'zod'
 
+import { collectDeclarations } from '../src/bootstrap.ts'
 import type { RuntimeEndpoint } from '../src/endpoint.ts'
-import { createError } from '../src/errors/index.ts'
+import {
+  assignErrorName,
+  clearErrorHandlers,
+  createError,
+  isErrorFactory,
+} from '../src/errors/index.ts'
+import { execute } from '../src/execute.ts'
 import {
   NoHandlerError,
   ParseError,
   ValidationError,
-  assignErrorName,
-  clearErrorHandlers,
-  collectDeclarations,
   error,
-  execute,
   get,
-  isErrorFactory,
   middleware,
   onError,
 } from '../src/index.ts'
