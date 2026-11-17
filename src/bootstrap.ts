@@ -53,9 +53,13 @@ export function createFetchHandler(
 ): (request: Request) => Promise<Response> {
   return async (request) => {
     const url = new URL(request.url)
-    const endpoint = matcher.match(request.method, url.pathname) ?? notFoundEndpoint(url.pathname)
+    const matched = matcher.match(request.method, url.pathname)
+    const endpoint = matched ?? notFoundEndpoint(url.pathname)
 
-    return execute(endpoint, request, { middlewares: [...middlewares] })
+    return execute(endpoint, request, {
+      middlewares: [...middlewares],
+      skipBody: matched === undefined,
+    })
   }
 }
 

@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { collectDeclarations, createFetchHandler } from '../src/bootstrap.ts'
 import type { RuntimeEndpoint } from '../src/endpoint.ts'
-import { get } from '../src/index.ts'
+import { get, post } from '../src/index.ts'
 import { middleware } from '../src/index.ts'
 import { createMatcher } from '../src/matcher.ts'
 import type { RuntimeMiddleware } from '../src/middleware.ts'
@@ -39,6 +39,34 @@ describe('createFetchHandler', () => {
     const response = await handler(new Request('http://localhost/missing'))
 
     expect(response.status).toBe(404)
+  })
+
+  it('returns 404 for an unmatched route with an invalid JSON body', async () => {
+    const handler = createFetchHandler(createMatcher([]), [])
+    const request = new Request('http://localhost/missing', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{not json',
+    })
+
+    const response = await handler(request)
+
+    expect(response.status).toBe(404)
+  })
+
+  it('still parses the body of a matched route with an invalid JSON body', async () => {
+    const endpoint = asEndpoint(post('/health').handle(() => ({ ok: true })))
+    const handler = createFetchHandler(createMatcher([endpoint]), [])
+    const request = new Request('http://localhost/health', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{not json',
+    })
+
+    const response = await handler(request)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toMatchObject({ name: 'PARSE_ERROR' })
   })
 
   it('executes the matched endpoint and returns its response', async () => {
