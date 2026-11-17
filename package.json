@@ -19,8 +19,7 @@
     "url": "git+https://github.com/monoconjs/monocon.git"
   },
   "files": [
-    "dist",
-    "CHANGELOG.md"
+    "dist"
   ],
   "type": "module",
   "sideEffects": false,
