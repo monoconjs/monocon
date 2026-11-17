@@ -1,6 +1,6 @@
 {
   "name": "monocon",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "A web-standard HTTP framework for TypeScript with typed, chainable endpoints and middleware-provided context inference.",
   "keywords": [
     "framework",
@@ -19,7 +19,8 @@
     "url": "git+https://github.com/monoconjs/monocon.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "type": "module",
   "sideEffects": false,
@@ -68,7 +69,7 @@
     }
   },
   "scripts": {
-    "build": "tsdown && pnpm -r build",
+    "build": "pnpm --filter @monocon/cli build && tsdown && pnpm --filter playground build",
     "check:package": "publint && attw --pack .",
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
     "test": "vitest run && pnpm -r test",
@@ -82,7 +83,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@monocon/cli": "latest",
+    "@monocon/cli": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {

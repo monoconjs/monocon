@@ -1,6 +1,6 @@
 {
   "name": "@monocon/cli",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Codegen CLI for monocon.",
   "license": "MIT",
   "bin": {
