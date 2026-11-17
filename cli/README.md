@@ -16,6 +16,7 @@ Requires Node.js 22 or later.
 
 ```sh
 monocon gen [command...]   # generate .monocon declarations, then optionally run a command
+monocon gen --watch [command...]  # regenerate on changes and restart the command
 monocon build              # compile sources to .monocon-dist for bundlers
 ```
 
@@ -26,11 +27,17 @@ Scans the entry files configured in `monocon.config.ts` and writes to `.monocon/
 - `types.d.ts` — module augmentation that maps matched middleware to each endpoint path, so handler contexts are typed with the values your middleware provides.
 - `registry.mjs` / `registry.d.mts` — a barrel re-exporting all declarations, consumed by `bootstrap()` at runtime.
 
-If a command is appended, it runs after generation. This is useful for watching or dev servers:
+If a command is appended, it runs after generation.
+
+### Watch mode
+
+Add `--watch` to keep the process running. Monocon watches your entry sources and `monocon.config.ts`; on a change it regenerates `.monocon/` and restarts the appended command:
 
 ```sh
-monocon gen tsx watch src/index.ts
+monocon gen --watch tsx src/index.ts
 ```
+
+Press Ctrl+C to stop the watcher and the command together. Since monocon already restarts the command, do not give the appended command its own watcher. `--watch` may also appear before `gen` (`monocon --watch gen tsx src/index.ts`).
 
 ### `monocon build`
 
