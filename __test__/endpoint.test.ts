@@ -52,6 +52,7 @@ describe('endpoint factory', () => {
       beforeHandle: [],
       afterHandle: [],
       onResponse: [],
+      onError: [],
     })
   })
 })

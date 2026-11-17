@@ -1,6 +1,7 @@
 export * from './endpoint.ts'
 export * from './middleware.ts'
 export * from './context.ts'
+export * from './errors/index.ts'
 export * from './pattern.ts'
 export * from './validation.ts'
 export * from './execute.ts'

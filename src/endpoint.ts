@@ -6,7 +6,12 @@ import type {
 } from './types/endpoint.ts'
 import type { EndpointMethod } from './types/http.ts'
 
-export type EndpointLifecycle = 'onRequest' | 'beforeHandle' | 'afterHandle' | 'onResponse'
+export type EndpointLifecycle =
+  | 'onRequest'
+  | 'beforeHandle'
+  | 'afterHandle'
+  | 'onResponse'
+  | 'onError'
 
 type Hook = (...args: any[]) => any
 
@@ -25,6 +30,7 @@ interface Builder extends RuntimeEndpoint {
   handle: (handler: Hook) => Builder
   afterHandle: (hook: Hook) => Builder
   onResponse: (hook: Hook) => Builder
+  onError: (hook: Hook) => Builder
 }
 
 function createBuilder<
@@ -41,6 +47,7 @@ function createBuilder<
     beforeHandle: [],
     afterHandle: [],
     onResponse: [],
+    onError: [],
   }
 
   const builder: Builder = {
@@ -68,6 +75,10 @@ function createBuilder<
     },
     onResponse(hook) {
       hooks.onResponse.push(hook)
+      return builder
+    },
+    onError(hook) {
+      hooks.onError.push(hook)
       return builder
     },
   }

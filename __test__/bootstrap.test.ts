@@ -63,7 +63,7 @@ describe('createFetchHandler', () => {
 
     expect(response.status).toBe(400)
     expect(await response.json()).toMatchObject({
-      error: 'ValidationError',
+      name: 'VALIDATION_ERROR',
       location: 'params',
     })
   })

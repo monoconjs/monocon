@@ -7,25 +7,22 @@ export type ErrorCode = Extract<keyof ErrorMap, string>
 
 export interface ErrorFactory<Payload, Status extends number = number> {
   (payload: Payload): ErrorInstance<Payload, Status>
-  readonly '~body': Payload
+  readonly '~payload': Payload
   readonly '~status': Status
 }
 
 export interface ErrorInstance<Payload, Status extends number> extends Error {
-  readonly code: ErrorCode
+  readonly name: ErrorCode
   readonly status: Status
-  readonly body: Payload
+  readonly error: Payload
 }
 
-export interface ErrorOptions<Body extends Schema, Status extends number> {
+export interface ErrorOptions<Error extends Schema, Status extends number> {
+  readonly name?: string
   readonly status: Status
-  readonly body: Body
-  readonly toResponse?: (body: InferOutput<Body>) => Response
+  readonly payload: Error
+  readonly toResponse?: (payload: InferOutput<Error>) => Response
 }
-
-export declare function error<Body extends Schema, Status extends number>(
-  options: ErrorOptions<Body, Status>,
-): ErrorFactory<InferOutput<Body>, Status>
 
 export type PayloadOf<Code extends ErrorCode> = ErrorMap[Code]
 
@@ -43,8 +40,11 @@ export type ErrorStage =
 
 type ErrorDetail<Code extends ErrorCode> = Code extends ErrorCode
   ? {
-      readonly code: Code
-      readonly error: PayloadOf<Code>
+      /** The error code identifying the kind of error. */
+      readonly name: Code
+      /** The payload carried by the error. */
+      readonly payload: PayloadOf<Code>
+      /** The HTTP status code associated with the error. */
       readonly status: StatusOf<Code>
     }
   : never
@@ -69,10 +69,3 @@ export type ErrorContext = ErrorContextOf<ErrorCode>
 export type ErrorHandlerOf<Codes extends ErrorCode> = (
   ctx: ErrorContextOf<Codes>,
 ) => MaybePromise<Response | void>
-
-export declare function onError<const Codes extends readonly ErrorCode[]>(
-  handler: ErrorHandlerOf<Codes[number]>,
-  deps: Codes,
-): void
-
-export declare function onError(handler: ErrorHandlerOf<ErrorCode>): void

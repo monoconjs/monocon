@@ -4,10 +4,10 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 import type { RuntimeEndpoint } from './endpoint.ts'
+import { assignErrorName, isErrorFactory } from './errors/index.ts'
 import { execute } from './execute.ts'
 import { createMatcher, type Matcher } from './matcher.ts'
 import type { RuntimeMiddleware } from './middleware.ts'
-import { ValidationError } from './validation.ts'
 
 export interface ServerConfig {
   readonly port?: number
@@ -37,8 +37,9 @@ export function collectDeclarations(registry: object): CollectedDeclarations {
   const endpoints: RuntimeEndpoint[] = []
   const middlewares: RuntimeMiddleware[] = []
 
-  for (const value of Object.values(registry)) {
-    if (isEndpoint(value)) endpoints.push(value)
+  for (const [exportName, value] of Object.entries(registry)) {
+    if (isErrorFactory(value)) assignErrorName(value, exportName)
+    else if (isEndpoint(value)) endpoints.push(value)
     else if (isMiddleware(value)) middlewares.push(value)
   }
 
@@ -54,17 +55,7 @@ export function createFetchHandler(
     const endpoint = matcher.match(request.method, url.pathname)
     if (!endpoint) return new Response('Not Found', { status: 404 })
 
-    try {
-      return await execute(endpoint, request, { middlewares: [...middlewares] })
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        return Response.json(
-          { error: 'ValidationError', location: error.location, issues: error.issues },
-          { status: 400 },
-        )
-      }
-      return new Response('Internal Server Error', { status: 500 })
-    }
+    return execute(endpoint, request, { middlewares: [...middlewares] })
   }
 }
 
@@ -97,8 +88,9 @@ async function start(
     void toWebRequest(req)
       .then(handler)
       .then((response) => sendResponse(res, response))
-      .catch(() => {
+      .catch((error) => {
         if (!res.headersSent) res.writeHead(500)
+        console.error(error)
         res.end('Internal Server Error')
       })
   })

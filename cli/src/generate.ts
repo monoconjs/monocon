@@ -95,13 +95,15 @@ function renderTypes(
   lines.push('')
   lines.push('  interface ErrorMap {')
   for (const item of errors) {
-    lines.push(`    ${JSON.stringify(item.exportName)}: (typeof ${item.exportName})['~body']`)
+    const key = item.name ?? item.exportName
+    lines.push(`    ${JSON.stringify(key)}: (typeof ${item.exportName})['~payload']`)
   }
   lines.push('  }')
   lines.push('')
   lines.push('  interface ErrorStatusMap {')
   for (const item of errors) {
-    lines.push(`    ${JSON.stringify(item.exportName)}: (typeof ${item.exportName})['~status']`)
+    const key = item.name ?? item.exportName
+    lines.push(`    ${JSON.stringify(key)}: (typeof ${item.exportName})['~status']`)
   }
   lines.push('  }', '}', '')
   return lines.join('\n')
