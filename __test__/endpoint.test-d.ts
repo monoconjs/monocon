@@ -68,7 +68,7 @@ describe('endpoint builder', () => {
       .afterHandle((_ctx, result) => result)
 
     expectTypeOf<BuilderMethods<typeof afterHandles>>().toEqualTypeOf<
-      'afterHandle' | 'onResponse'
+      'afterHandle' | 'onResponse' | 'onError'
     >()
 
     const responses = get('/response')
@@ -76,7 +76,7 @@ describe('endpoint builder', () => {
       .onResponse((_ctx, response) => response)
       .onResponse((_ctx, response) => response)
 
-    expectTypeOf<BuilderMethods<typeof responses>>().toEqualTypeOf<'onResponse'>()
+    expectTypeOf<BuilderMethods<typeof responses>>().toEqualTypeOf<'onResponse' | 'onError'>()
 
     const mixed = get('/mixed')
       .handle(() => 'ok')
@@ -84,7 +84,7 @@ describe('endpoint builder', () => {
       .onResponse((_ctx, response) => response)
       .onResponse((_ctx, response) => response)
 
-    expectTypeOf<BuilderMethods<typeof mixed>>().toEqualTypeOf<'onResponse'>()
+    expectTypeOf<BuilderMethods<typeof mixed>>().toEqualTypeOf<'onResponse' | 'onError'>()
   })
 
   it('rejects going backwards', () => {
@@ -105,6 +105,6 @@ describe('endpoint builder', () => {
     fresh.afterHandle(() => {})
 
     type AfterHandle = EndpointBuilder<'handle', EndpointState<'GET', '/f'>>
-    expectTypeOf<keyof AfterHandle>().toEqualTypeOf<'afterHandle' | 'onResponse'>()
+    expectTypeOf<keyof AfterHandle>().toEqualTypeOf<'afterHandle' | 'onResponse' | 'onError'>()
   })
 })

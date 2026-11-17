@@ -1,5 +1,6 @@
 import type { MaybePromise, Merge, ProvidedOfHook, Simplify } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
+import type { ErrorCode, ErrorContextOf } from './error.ts'
 import type { EndpointMethod } from './http.ts'
 import type { MiddlewareFor } from './middleware.ts'
 import type { InferOutput, Schema } from './schema.ts'
@@ -112,6 +113,22 @@ export type EndpointResponseHook<State extends EndpointState> = (
   response: Response,
 ) => MaybePromise<Response | void>
 
+export type EndpointErrorContext<State extends EndpointState> = ErrorContextOf<
+  ErrorCode,
+  MiddlewareFor<State['~path']> & State['~provided'],
+  ParamsOf<State['~path'], OptionsOf<State>>,
+  QueryOf<OptionsOf<State>>,
+  BodyOf<OptionsOf<State>>,
+  MetaOf<OptionsOf<State>>,
+  ResponseOutput<OptionsOf<State>>,
+  HeadersOf<OptionsOf<State>>,
+  HeaderNamesOf<OptionsOf<State>>
+>
+
+export type EndpointErrorHook<State extends EndpointState> = (
+  ctx: EndpointErrorContext<State>,
+) => MaybePromise<Response | void>
+
 export type EndpointStage = 'onRequest' | 'beforeHandle' | 'handle' | 'afterHandle' | 'onResponse'
 
 type FinalStage = 'handle' | 'afterHandle' | 'onResponse'
@@ -155,6 +172,16 @@ interface EndpointMethods<State extends EndpointState> {
     State['~provided'],
     'onResponse'
   >
+
+  onError: (
+    hook: EndpointErrorHook<State>,
+  ) => Endpoint<
+    State['~method'],
+    State['~path'],
+    OptionsOf<State>,
+    State['~provided'],
+    'onResponse'
+  >
 }
 
 type AvailableMethods<Stage extends EndpointStage> =
@@ -163,6 +190,7 @@ type AvailableMethods<Stage extends EndpointStage> =
   | (Stage extends 'onRequest' | 'beforeHandle' ? 'handle' : never)
   | (Stage extends 'handle' | 'afterHandle' ? 'afterHandle' : never)
   | (Stage extends 'handle' | 'afterHandle' | 'onResponse' ? 'onResponse' : never)
+  | 'onError'
 
 export type EndpointBuilder<Stage extends EndpointStage, State extends EndpointState> = Pick<
   EndpointMethods<State>,

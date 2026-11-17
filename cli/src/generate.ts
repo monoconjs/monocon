@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
 
-import type { Declaration, EndpointDecl, MiddlewareDecl } from './analyze.ts'
+import type { Declaration, EndpointDecl, ErrorDecl, MiddlewareDecl } from './analyze.ts'
 import { analyzeEntries } from './analyze.ts'
 import { expandEntries, loadConfig } from './config.ts'
 import { matchMiddlewares } from './match.ts'
@@ -27,8 +27,9 @@ export async function generate(cwd: string, configFile: string): Promise<Generat
   const middlewares = declarations.filter(
     (item): item is MiddlewareDecl => item.kind === 'middleware',
   )
+  const errors = declarations.filter((item): item is ErrorDecl => item.kind === 'error')
 
-  const types = renderTypes(outputDir, endpoints, middlewares)
+  const types = renderTypes(outputDir, endpoints, middlewares, errors)
   const registry = renderRegistry(outputDir, declarations)
   const registryTypes = renderRegistryTypes(outputDir, declarations)
 
@@ -52,6 +53,7 @@ function renderTypes(
   outputDir: string,
   endpoints: EndpointDecl[],
   middlewares: MiddlewareDecl[],
+  errors: ErrorDecl[],
 ): string {
   const rows: Array<{ path: string; matched: MiddlewareDecl[] }> = []
   const seenPaths = new Set<string>()
@@ -67,6 +69,7 @@ function renderTypes(
   const imports = collectImports(
     outputDir,
     rows.flatMap((row) => row.matched),
+    errors,
   )
 
   const lines = [
@@ -88,17 +91,33 @@ function renderTypes(
     lines.push(`    ${JSON.stringify(row.path)}: ${provided}`)
   }
 
+  lines.push('  }')
+  lines.push('')
+  lines.push('  interface ErrorMap {')
+  for (const item of errors) {
+    lines.push(`    ${JSON.stringify(item.exportName)}: (typeof ${item.exportName})['~body']`)
+  }
+  lines.push('  }')
+  lines.push('')
+  lines.push('  interface ErrorStatusMap {')
+  for (const item of errors) {
+    lines.push(`    ${JSON.stringify(item.exportName)}: (typeof ${item.exportName})['~status']`)
+  }
   lines.push('  }', '}', '')
   return lines.join('\n')
 }
 
-function collectImports(outputDir: string, middlewares: MiddlewareDecl[]): string[] {
+function collectImports(
+  outputDir: string,
+  middlewares: MiddlewareDecl[],
+  errors: ErrorDecl[],
+): string[] {
   const groups = new Map<string, string[]>()
 
-  for (const middleware of middlewares) {
-    const specifier = importSpecifier(outputDir, middleware.file)
+  for (const item of [...middlewares, ...errors]) {
+    const specifier = importSpecifier(outputDir, item.file)
     const names = groups.get(specifier) ?? []
-    if (!names.includes(middleware.exportName)) names.push(middleware.exportName)
+    if (!names.includes(item.exportName)) names.push(item.exportName)
     groups.set(specifier, names)
   }
 

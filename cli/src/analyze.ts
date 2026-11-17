@@ -46,7 +46,13 @@ export interface MiddlewareDecl {
   readonly pattern: Pattern
 }
 
-export type Declaration = EndpointDecl | MiddlewareDecl
+export interface ErrorDecl {
+  readonly kind: 'error'
+  readonly file: string
+  readonly exportName: string
+}
+
+export type Declaration = EndpointDecl | MiddlewareDecl | ErrorDecl
 
 export interface AnalyzeResult {
   readonly declarations: Declaration[]
@@ -92,6 +98,15 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
         continue
       }
 
+      if (factory.name === 'error') {
+        declarations.push({
+          kind: 'error',
+          file,
+          exportName: binding.exportName,
+        })
+        continue
+      }
+
       if (ENDPOINT_FACTORIES.has(factory.name)) {
         const path = readPath(factory.call, file, warnings)
         if (!path) continue
@@ -129,7 +144,7 @@ function findFactoryCall(expression: ts.Expression): FactoryCall | undefined {
 }
 
 function isFactoryName(name: string): boolean {
-  return name === 'middleware' || ENDPOINT_FACTORIES.has(name)
+  return name === 'middleware' || name === 'error' || ENDPOINT_FACTORIES.has(name)
 }
 
 function readPath(call: ts.CallExpression, file: string, warnings: string[]): string | undefined {
