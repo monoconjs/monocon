@@ -1,6 +1,7 @@
 import type { EndpointMiddlewareContext } from '../global.ts'
 import type { MaybePromise, ProvidedOfHook, Simplify } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
+import type { ErrorCode, ErrorContextOf } from './error.ts'
 
 export type MiddlewareFor<Path extends string> = Path extends keyof EndpointMiddlewareContext
   ? EndpointMiddlewareContext[Path] extends object
@@ -31,11 +32,16 @@ export type MiddlewareResponseHook<Provided extends object = {}> = (
   response: Response,
 ) => MaybePromise<Response | void>
 
+export type MiddlewareErrorHook<Provided extends object = {}> = (
+  ctx: ErrorContextOf<ErrorCode, Provided>,
+) => MaybePromise<Response | void>
+
 export interface MiddlewareHooks {
   readonly onRequest?: MiddlewareHook
   readonly beforeHandle?: MiddlewareHook
   readonly afterHandle?: MiddlewareAfterHook
   readonly onResponse?: MiddlewareResponseHook
+  readonly onError?: MiddlewareErrorHook
 }
 
 type HookProvided<Hooks extends MiddlewareHooks, Key extends keyof Hooks> = Hooks[Key] extends (
