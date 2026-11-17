@@ -16,6 +16,7 @@ type Hook = (...args: any[]) => any
 
 export interface ExecuteOptions {
   readonly middlewares?: RuntimeMiddleware[]
+  readonly skipBody?: boolean
 }
 
 export async function execute(
@@ -39,9 +40,11 @@ export async function execute(
       optionsOf.query,
       optionsOf.query ? Object.fromEntries(searchParams) : searchParams,
     )
-    const parsedBody = await parseBody(request).catch((cause: unknown) => {
-      throw ParseError({ message: cause instanceof Error ? cause.message : String(cause) })
-    })
+    const parsedBody = options.skipBody
+      ? undefined
+      : await parseBody(request).catch((cause: unknown) => {
+          throw ParseError({ message: cause instanceof Error ? cause.message : String(cause) })
+        })
     const body = await validate('body', optionsOf.body, parsedBody)
     const headers = await validate(
       'headers',

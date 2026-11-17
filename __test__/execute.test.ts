@@ -170,4 +170,27 @@ describe('execute', () => {
 
     expect(await response.json()).toEqual({ status: 'ok' })
   })
+
+  it('skips body parsing when skipBody is set', async () => {
+    let seenBody: unknown = 'unset'
+    const endpoint = asEndpoint(
+      get('/missing').handle((ctx) => {
+        seenBody = ctx.body
+        return { ok: true }
+      }),
+    )
+
+    const response = await execute(
+      endpoint,
+      request('/missing', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{not json',
+      }),
+      { skipBody: true },
+    )
+
+    expect(response.status).toBe(200)
+    expect(seenBody).toBeUndefined()
+  })
 })
