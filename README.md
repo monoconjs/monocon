@@ -143,6 +143,7 @@ The `monocon` command is provided by the bundled `@monocon/cli` dependency.
 
 ```sh
 monocon gen [command...]   # generate .monocon declarations, then optionally run a command
+monocon gen --watch [command...]  # regenerate on changes and restart the command
 monocon build              # compile sources to .monocon-dist for bundlers
 ```
 
