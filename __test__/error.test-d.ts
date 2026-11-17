@@ -1,4 +1,5 @@
-import type { ErrorCode, ErrorContextOf, PayloadOf, StatusOf } from '../src/index.ts'
+import { onError } from '../src/index.ts'
+import type { ErrorCode, ErrorContext, ErrorContextOf, PayloadOf, StatusOf } from '../src/index.ts'
 import type { StandardSchemaIssue } from '../src/types/schema.ts'
 
 declare module '../src/global.ts' {
@@ -50,5 +51,26 @@ describe('error types', () => {
     expectTypeOf<ErrorContextOf<ErrorCode>['stage']>().toEqualTypeOf<
       'validation' | 'onRequest' | 'beforeHandle' | 'handle' | 'afterHandle' | 'onResponse'
     >()
+  })
+
+  it('onError with empty deps infers the full error context, like no deps', () => {
+    onError((ctx) => {
+      expectTypeOf(ctx).toEqualTypeOf<ErrorContext>()
+    }, [])
+  })
+
+  it('onError with no deps infers the full error context', () => {
+    onError((ctx) => {
+      expectTypeOf(ctx).toEqualTypeOf<ErrorContext>()
+    })
+  })
+
+  it('onError with named deps narrows the context', () => {
+    onError(
+      (ctx) => {
+        expectTypeOf(ctx.name).toEqualTypeOf<'CONFLICT_ERROR'>()
+      },
+      ['CONFLICT_ERROR'],
+    )
   })
 })

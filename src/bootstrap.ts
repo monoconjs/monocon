@@ -3,6 +3,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { notFoundEndpoint } from './_not-found.ts'
 import type { RuntimeEndpoint } from './endpoint.ts'
 import { assignErrorName, isErrorFactory } from './errors/index.ts'
 import { execute } from './execute.ts'
@@ -52,8 +53,7 @@ export function createFetchHandler(
 ): (request: Request) => Promise<Response> {
   return async (request) => {
     const url = new URL(request.url)
-    const endpoint = matcher.match(request.method, url.pathname)
-    if (!endpoint) return new Response('Not Found', { status: 404 })
+    const endpoint = matcher.match(request.method, url.pathname) ?? notFoundEndpoint(url.pathname)
 
     return execute(endpoint, request, { middlewares: [...middlewares] })
   }

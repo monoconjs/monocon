@@ -134,6 +134,20 @@ describe('onError handlers (runtime)', () => {
     })
   })
 
+  it('global onError with empty deps handles any name, like no deps', async () => {
+    onError((ctx) => Response.json({ handled: ctx.name }, { status: 422 }), [])
+    const endpoint = asEndpoint(
+      get('/boom').handle(() => {
+        throw createError('INTERNAL_ERROR', 500, 'boom')
+      }),
+    )
+
+    const response = await execute(endpoint, request('/boom'))
+
+    expect(response.status).toBe(422)
+    expect(await response.json()).toEqual({ handled: 'INTERNAL_ERROR' })
+  })
+
   it('falls back to the factory toResponse when no handler responds', async () => {
     const factory = conflictFactory()
     const endpoint = asEndpoint(
