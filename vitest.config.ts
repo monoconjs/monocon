@@ -7,6 +7,10 @@ export default defineConfig({
     alias: {
       '@monocon/core/global': resolve(__dirname, 'packages/core/src/global.ts'),
       '@monocon/core': resolve(__dirname, 'packages/core/src/index.ts'),
+      '@monocon/adapter/node': resolve(__dirname, 'packages/adapter/src/node.ts'),
+      '@monocon/adapter/bun': resolve(__dirname, 'packages/adapter/src/bun.ts'),
+      '@monocon/adapter/deno': resolve(__dirname, 'packages/adapter/src/deno.ts'),
+      '@monocon/adapter/workers': resolve(__dirname, 'packages/adapter/src/workers.ts'),
     },
   },
   test: {

@@ -1,6 +1,4 @@
-export interface FetchHandler {
-  (request: Request): Promise<Response>
-}
+import type { FetchHandler } from '@monocon/core'
 
 export interface ServerConfig {
   readonly port?: number

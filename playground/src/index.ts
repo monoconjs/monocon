@@ -1,4 +1,4 @@
-import { bootstrap } from 'monocon'
+import { start as bootstrap } from 'monocon/node'
 
 const server = await bootstrap()
 

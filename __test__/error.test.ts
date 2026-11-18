@@ -7,8 +7,8 @@ import {
   isErrorFactory,
 } from '../packages/core/src/errors/index.ts'
 import { execute } from '../packages/core/src/execute.ts'
+import { collectDeclarations } from '../packages/core/src/fetch-handler.ts'
 import type { RuntimeRoute } from '../packages/core/src/route.ts'
-import { collectDeclarations } from '../src/bootstrap.ts'
 import {
   NoHandlerError,
   ParseError,

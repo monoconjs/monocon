@@ -55,7 +55,7 @@ export async function build(options: BuildOptions): Promise<BuildResult> {
 
   const entry = writes[0]?.path
   if (entry === undefined) {
-    throw new Error('No bootstrap() call found in the compiled entry files')
+    throw new Error('No start() call found in the compiled entry files')
   }
 
   return { outDir, entry }
@@ -69,14 +69,15 @@ interface InjectContext {
 function injectRegistry(text: string, context: InjectContext): string | undefined {
   const { file, outDir } = context
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
-  if (!importsBootstrap(source)) return undefined
+  const startNames = importedStartNames(source)
+  if (startNames.size === 0) return undefined
 
   const calls: ts.CallExpression[] = []
   const visit = (node: ts.Node): void => {
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
-      node.expression.text === 'bootstrap'
+      startNames.has(node.expression.text)
     ) {
       calls.push(node)
     }
@@ -87,21 +88,23 @@ function injectRegistry(text: string, context: InjectContext): string | undefine
 
   const registryImport = `import * as __monoconRegistry from '${importPath(file, resolve(outDir, '__registry.mjs'))}'`
 
-  const emptyCall = 'bootstrap({ registry: __monoconRegistry })'
   const replacements = calls.map((call) => {
+    const callName = call.expression.getText(source)
     const [argument] = call.arguments
+    const injected = (options?: string) =>
+      `${callName}({ registry: __monoconRegistry${options === undefined ? '' : `, ...${options}`} })`
     if (
       argument === undefined ||
       (ts.isObjectLiteralExpression(argument) && argument.properties.length === 0)
     ) {
-      return { start: call.getStart(source), end: call.getEnd(), text: emptyCall }
+      return { start: call.getStart(source), end: call.getEnd(), text: injected() }
     }
 
     const userOptions = text.slice(argument.getStart(source), argument.getEnd())
     return {
       start: call.getStart(source),
       end: call.getEnd(),
-      text: `bootstrap({ registry: __monoconRegistry, ...${userOptions} })`,
+      text: injected(userOptions),
     }
   })
 
@@ -113,20 +116,29 @@ function injectRegistry(text: string, context: InjectContext): string | undefine
   return `${registryImport}\n${output}`
 }
 
-function importsBootstrap(source: ts.SourceFile): boolean {
+function importedStartNames(source: ts.SourceFile): Set<string> {
+  const names = new Set<string>()
   for (const statement of source.statements) {
     if (!ts.isImportDeclaration(statement)) continue
-    if (
-      !ts.isStringLiteral(statement.moduleSpecifier) ||
-      statement.moduleSpecifier.text !== 'monocon'
-    ) {
-      continue
-    }
+    if (!ts.isStringLiteral(statement.moduleSpecifier)) continue
+    if (!isStartModule(statement.moduleSpecifier.text)) continue
     const bindings = statement.importClause?.namedBindings
     if (!bindings || !ts.isNamedImports(bindings)) continue
-    if (bindings.elements.some((element) => element.name.text === 'bootstrap')) return true
+    for (const element of bindings.elements) {
+      if (element.propertyName?.text === 'start' || element.name.text === 'start') {
+        names.add(element.name.text)
+      }
+    }
   }
-  return false
+  return names
+}
+
+function isStartModule(specifier: string): boolean {
+  return (
+    /^monocon\/[^/]+$/.test(specifier) ||
+    /^@monocon\/adapter\/[^/]+$/.test(specifier) ||
+    specifier === '@monocon/adapter'
+  )
 }
 
 function compiledPathFor(file: string, rootDir: string, outDir: string): string {

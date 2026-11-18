@@ -5,7 +5,11 @@
     "paths": {
       "monocon": ["../src/index.ts"],
       "monocon/global": ["../src/global.ts"],
-      "monocon/config": ["../src/config.ts"]
+      "monocon/config": ["../src/config.ts"],
+      "monocon/node": ["../src/adapters/node.ts"],
+      "monocon/bun": ["../src/adapters/bun.ts"],
+      "monocon/deno": ["../src/adapters/deno.ts"],
+      "monocon/workers": ["../src/adapters/workers.ts"]
     }
   },
   "include": ["src", ".monocon/*.d.ts"]
