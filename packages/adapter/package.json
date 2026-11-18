@@ -1,6 +1,6 @@
 {
   "name": "@monocon/adapter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Platform adapters for monocon (Node, Bun, Deno, Cloudflare Workers).",
   "license": "MIT",
   "files": [

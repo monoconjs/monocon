@@ -1,6 +1,6 @@
 {
   "name": "monocon",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A web-standard HTTP framework for TypeScript with typed, chainable routes and middleware-provided context inference.",
   "keywords": [
     "framework",

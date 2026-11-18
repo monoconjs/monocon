@@ -4,6 +4,13 @@ All notable changes to `monocon` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-11-18
+
+### Added
+
+- Provide the `monocon` command directly from the `monocon` package, so installing it alone is enough to use the CLI.
+- Export the compiler CLI at `@monocon/compiler/cli`.
+
 ## [0.1.0] - 2026-11-18
 
 ### Added
@@ -52,5 +59,6 @@ Skipped to keep the version number in sync with `@monocon/compiler`.
 - Route matching, request execution, and `bootstrap()` server startup.
 - Code generation CLI with `.monocon` type declarations and `monocon build` for bundler output.
 
+[0.1.1]: https://github.com/monoconjs/monocon/compare/v0.1.0...v0.1.1
 [0.0.3]: https://github.com/monoconjs/monocon/compare/v0.0.1...v0.0.3
 [0.0.1]: https://github.com/monoconjs/monocon/releases/tag/v0.0.1
