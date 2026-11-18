@@ -7,6 +7,7 @@ export type ErrorCode = Extract<keyof ErrorMap, string>
 
 export interface ErrorFactory<Payload, Status extends number = number> {
   (payload: Payload): ErrorInstance<Payload, Status>
+  new (payload: Payload): ErrorInstance<Payload, Status>
   readonly '~payload': Payload
   readonly '~status': Status
 }

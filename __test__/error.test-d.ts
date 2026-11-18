@@ -1,5 +1,7 @@
+import { z } from 'zod'
+
 import type { StandardSchemaIssue } from '../packages/core/src/types/schema.ts'
-import { onError } from '../src/index.ts'
+import { defineError, onError } from '../src/index.ts'
 import type { ErrorCode, ErrorContext, ErrorContextOf, PayloadOf, StatusOf } from '../src/index.ts'
 
 declare module '../packages/core/src/global.ts' {
@@ -12,6 +14,15 @@ declare module '../packages/core/src/global.ts' {
 }
 
 describe('error types', () => {
+  it('a factory can be called directly or with new, yielding the same instance type', () => {
+    const factory = defineError({ status: 409, payload: z.object({ reason: z.string() }) })
+    const called = factory({ reason: 'taken' })
+    const constructed = new factory({ reason: 'taken' })
+
+    expectTypeOf(constructed).toEqualTypeOf(called)
+    expectTypeOf(called.status).toEqualTypeOf<409>()
+  })
+
   it('name is a literal union from the error map', () => {
     expectTypeOf<ErrorCode>().toEqualTypeOf<
       | 'VALIDATION_ERROR'
