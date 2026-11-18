@@ -17,7 +17,7 @@ Requires Node.js 22 or later.
 ```sh
 monocon gen [command...]   # generate .monocon declarations, then optionally run a command
 monocon gen --watch [command...]  # regenerate on changes and restart the command
-monocon build              # compile sources to .monocon-dist for bundlers
+monocon build [command...] # compile sources to .monocon-dist, then optionally run a command
 ```
 
 ### `monocon gen`
@@ -42,6 +42,14 @@ Press Ctrl+C to stop the watcher and the command together. Since monocon already
 ### `monocon build`
 
 Runs generation, then compiles the entry files to `.monocon-dist/`, injecting the generated registry import into `start()` calls (from any platform adapter). The result is consumed by a bundler (for example `tsdown` with `entry: './.monocon-dist/index.js'`).
+
+If a command is appended, it runs after the build completes — for example:
+
+```sh
+monocon build node dist/index.mjs
+```
+
+Monocon options (`--cwd`, `--config`) are still parsed whether they appear before or after `build`; everything else after `build` is passed to the appended command.
 
 ## Configuration
 
