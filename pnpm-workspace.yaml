@@ -1,6 +1,6 @@
 packages:
-  - cli
   - playground
+  - packages/*
 
 onlyBuiltDependencies:
   - esbuild

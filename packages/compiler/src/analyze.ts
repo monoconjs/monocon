@@ -3,7 +3,7 @@ import { relative } from 'node:path'
 
 import * as ts from 'typescript'
 
-const ENDPOINT_FACTORIES = new Set([
+const ROUTE_FACTORIES = new Set([
   'get',
   'post',
   'put',
@@ -31,8 +31,8 @@ export type Pattern =
   | { readonly kind: 'glob'; readonly value: string }
   | { readonly kind: 'rules'; readonly include: string[]; readonly exclude: string[] }
 
-export interface EndpointDecl {
-  readonly kind: 'endpoint'
+export interface RouteDecl {
+  readonly kind: 'route'
   readonly file: string
   readonly exportName: string
   readonly method: string
@@ -53,7 +53,7 @@ export interface ErrorDecl {
   readonly name: string | undefined
 }
 
-export type Declaration = EndpointDecl | MiddlewareDecl | ErrorDecl
+export type Declaration = RouteDecl | MiddlewareDecl | ErrorDecl
 
 export interface AnalyzeResult {
   readonly declarations: Declaration[]
@@ -109,11 +109,11 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
         continue
       }
 
-      if (ENDPOINT_FACTORIES.has(factory.name)) {
+      if (ROUTE_FACTORIES.has(factory.name)) {
         const path = readPath(factory.call, file, warnings)
         if (!path) continue
         declarations.push({
-          kind: 'endpoint',
+          kind: 'route',
           file,
           exportName: binding.exportName,
           method: METHOD_NAMES[factory.name] ?? factory.name.toUpperCase(),
@@ -146,14 +146,14 @@ function findFactoryCall(expression: ts.Expression): FactoryCall | undefined {
 }
 
 function isFactoryName(name: string): boolean {
-  return name === 'middleware' || name === 'error' || ENDPOINT_FACTORIES.has(name)
+  return name === 'middleware' || name === 'error' || ROUTE_FACTORIES.has(name)
 }
 
 function readPath(call: ts.CallExpression, file: string, warnings: string[]): string | undefined {
   const [argument] = call.arguments
   if (argument && ts.isStringLiteral(argument)) return argument.text
 
-  warnings.push(`endpoint path in ${relative(process.cwd(), file)} must be a string literal`)
+  warnings.push(`route path in ${relative(process.cwd(), file)} must be a string literal`)
   return undefined
 }
 

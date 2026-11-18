@@ -5,10 +5,10 @@ import {
   parseQuery,
   type RuntimeContext,
 } from './context.ts'
-import type { EndpointLifecycle, RuntimeEndpoint } from './endpoint.ts'
 import { NoHandlerError, ParseError, handleError } from './errors/index.ts'
 import type { RuntimeMiddleware } from './middleware.ts'
 import { matchMiddlewares } from './pattern.ts'
+import type { RouteLifecycle, RuntimeRoute } from './route.ts'
 import type { ErrorStage } from './types/error.ts'
 import { validate } from './validation.ts'
 
@@ -20,19 +20,19 @@ export interface ExecuteOptions {
 }
 
 export async function execute(
-  endpoint: RuntimeEndpoint,
+  route: RuntimeRoute,
   request: Request,
   options: ExecuteOptions = {},
 ): Promise<Response> {
   const url = new URL(request.url)
-  const optionsOf = endpoint['~options']
-  const middlewares = matchMiddlewares(options.middlewares ?? [], endpoint['~path'])
+  const optionsOf = route['~options']
+  const middlewares = matchMiddlewares(options.middlewares ?? [], route['~path'])
 
   let stage: ErrorStage = 'validation'
   let ctx: RuntimeContext | undefined
 
   try {
-    const rawParams = extractParams(endpoint['~path'], url.pathname)
+    const rawParams = extractParams(route['~path'], url.pathname)
     const params = await validate('params', optionsOf.params, rawParams)
     const searchParams = parseQuery(url)
     const query = await validate(
@@ -62,29 +62,29 @@ export async function execute(
     })
     if (isProvided(headers)) Object.assign(ctx.headers, headers)
 
-    const handler = endpoint['~handler']
+    const handler = route['~handler']
     if (!handler) {
-      throw NoHandlerError({ method: endpoint['~method'], path: endpoint['~path'] })
+      throw NoHandlerError({ method: route['~method'], path: route['~path'] })
     }
 
     stage = 'onRequest'
     const shortCircuit = await runBeforeHooks(
-      [...middlewareHooks(middlewares, 'onRequest'), ...endpoint['~hooks'].onRequest],
+      [...middlewareHooks(middlewares, 'onRequest'), ...route['~hooks'].onRequest],
       ctx,
     )
     if (shortCircuit) {
       stage = 'onResponse'
-      return finalize(shortCircuit, ctx, endpoint, middlewares)
+      return finalize(shortCircuit, ctx, route, middlewares)
     }
 
     stage = 'beforeHandle'
     const beforeResult = await runBeforeHooks(
-      [...middlewareHooks(middlewares, 'beforeHandle'), ...endpoint['~hooks'].beforeHandle],
+      [...middlewareHooks(middlewares, 'beforeHandle'), ...route['~hooks'].beforeHandle],
       ctx,
     )
     if (beforeResult) {
       stage = 'onResponse'
-      return finalize(beforeResult, ctx, endpoint, middlewares)
+      return finalize(beforeResult, ctx, route, middlewares)
     }
 
     stage = 'handle'
@@ -92,20 +92,20 @@ export async function execute(
 
     stage = 'afterHandle'
     const result = await runAfterHooks(
-      [...endpoint['~hooks'].afterHandle, ...middlewareHooks(middlewares, 'afterHandle')],
+      [...route['~hooks'].afterHandle, ...middlewareHooks(middlewares, 'afterHandle')],
       ctx,
       handled,
     )
 
     stage = 'onResponse'
-    return finalize(toResponse(result), ctx, endpoint, middlewares)
+    return finalize(toResponse(result), ctx, route, middlewares)
   } catch (error) {
     return handleError({
       error,
       request,
       url,
       context: ctx,
-      endpoint,
+      route,
       middlewares,
       stage,
     })
@@ -115,11 +115,11 @@ export async function execute(
 async function finalize(
   response: Response,
   ctx: RuntimeContext,
-  endpoint: RuntimeEndpoint,
+  route: RuntimeRoute,
   middlewares: RuntimeMiddleware[],
 ): Promise<Response> {
   return runResponseHooks(
-    [...endpoint['~hooks'].onResponse, ...middlewareHooks(middlewares, 'onResponse')],
+    [...route['~hooks'].onResponse, ...middlewareHooks(middlewares, 'onResponse')],
     ctx,
     response,
   )
@@ -166,7 +166,7 @@ async function runResponseHooks(
   return response
 }
 
-function middlewareHooks(middlewares: RuntimeMiddleware[], stage: EndpointLifecycle): Hook[] {
+function middlewareHooks(middlewares: RuntimeMiddleware[], stage: RouteLifecycle): Hook[] {
   const hooks: Hook[] = []
   for (const middleware of middlewares) {
     const hook = middleware['~hooks'][stage]

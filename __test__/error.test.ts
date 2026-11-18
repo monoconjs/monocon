@@ -1,14 +1,14 @@
 import { z } from 'zod'
 
-import { collectDeclarations } from '../src/bootstrap.ts'
-import type { RuntimeEndpoint } from '../src/endpoint.ts'
 import {
   assignErrorName,
   clearErrorHandlers,
   createError,
   isErrorFactory,
-} from '../src/errors/index.ts'
-import { execute } from '../src/execute.ts'
+} from '../packages/core/src/errors/index.ts'
+import { execute } from '../packages/core/src/execute.ts'
+import type { RuntimeRoute } from '../packages/core/src/route.ts'
+import { collectDeclarations } from '../src/bootstrap.ts'
 import {
   NoHandlerError,
   ParseError,
@@ -19,8 +19,8 @@ import {
   onError,
 } from '../src/index.ts'
 
-function asEndpoint(value: unknown): RuntimeEndpoint {
-  return value as RuntimeEndpoint
+function asRoute(value: unknown): RuntimeRoute {
+  return value as RuntimeRoute
 }
 
 function request(path: string): Request {
@@ -57,8 +57,8 @@ describe('error factory (runtime)', () => {
     const factory = error({ status: 409, payload: z.object({ reason: z.string() }) })
     expect(isErrorFactory(factory)).toBe(true)
 
-    const endpoint = asEndpoint(get('/x').handle(() => ({ ok: true })))
-    collectDeclarations({ Conflict: factory as never, ep: endpoint as never })
+    const route = asRoute(get('/x').handle(() => ({ ok: true })))
+    collectDeclarations({ Conflict: factory as never, ep: route as never })
     const thrown = factory({ reason: 'dup' }) as unknown as { name: string }
     expect(thrown.name).toBe('Conflict')
   })
@@ -78,8 +78,8 @@ describe('error factory (runtime)', () => {
 describe('onError handlers (runtime)', () => {
   beforeEach(() => clearErrorHandlers())
 
-  it('endpoint onError recovers a thrown error into a Response', async () => {
-    const endpoint = asEndpoint(
+  it('route onError recovers a thrown error into a Response', async () => {
+    const route = asRoute(
       get('/boom')
         .handle(() => {
           throw createError('INTERNAL_ERROR', 500, 'boom')
@@ -87,37 +87,37 @@ describe('onError handlers (runtime)', () => {
         .onError((ctx) => Response.json({ caught: ctx.name }, { status: 418 })),
     )
 
-    const response = await execute(endpoint, request('/boom'))
+    const response = await execute(route, request('/boom'))
 
     expect(response.status).toBe(418)
     expect(await response.json()).toEqual({ caught: 'INTERNAL_ERROR' })
   })
 
-  it('middleware onError sees errors from the endpoint', async () => {
+  it('middleware onError sees errors from the route', async () => {
     const mw = middleware('*', {
       onError: (ctx) => Response.json({ from: 'mw', name: ctx.name }, { status: 409 }),
     })
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/boom').handle(() => {
         throw createError('INTERNAL_ERROR', 500, 'boom')
       }),
     )
 
-    const response = await execute(endpoint, request('/boom'), { middlewares: [mw] })
+    const response = await execute(route, request('/boom'), { middlewares: [mw] })
 
     expect(response.status).toBe(409)
     expect(await response.json()).toEqual({ from: 'mw', name: 'INTERNAL_ERROR' })
   })
 
-  it('global onError runs when no endpoint/middleware handler responds', async () => {
+  it('global onError runs when no route/middleware handler responds', async () => {
     onError((ctx) => Response.json({ handled: ctx.name }, { status: 422 }))
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/boom').handle(() => {
         throw createError('INTERNAL_ERROR', 500, 'boom')
       }),
     )
 
-    const response = await execute(endpoint, request('/boom'))
+    const response = await execute(route, request('/boom'))
 
     expect(response.status).toBe(422)
     expect(await response.json()).toEqual({ handled: 'INTERNAL_ERROR' })
@@ -125,26 +125,26 @@ describe('onError handlers (runtime)', () => {
 
   it('global onError with deps only handles matching names', async () => {
     onError((ctx) => Response.json({ handled: ctx.name }, { status: 422 }), ['CONFLICT_ERROR'])
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/boom').handle(() => {
         throw createError('INTERNAL_ERROR', 500, 'boom')
       }),
     )
 
-    await expect(execute(endpoint, request('/boom'))).rejects.toMatchObject({
+    await expect(execute(route, request('/boom'))).rejects.toMatchObject({
       name: 'INTERNAL_ERROR',
     })
   })
 
   it('global onError with empty deps handles any name, like no deps', async () => {
     onError((ctx) => Response.json({ handled: ctx.name }, { status: 422 }), [])
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/boom').handle(() => {
         throw createError('INTERNAL_ERROR', 500, 'boom')
       }),
     )
 
-    const response = await execute(endpoint, request('/boom'))
+    const response = await execute(route, request('/boom'))
 
     expect(response.status).toBe(422)
     expect(await response.json()).toEqual({ handled: 'INTERNAL_ERROR' })
@@ -152,13 +152,13 @@ describe('onError handlers (runtime)', () => {
 
   it('falls back to the factory toResponse when no handler responds', async () => {
     const factory = conflictFactory()
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/conflict').handle(() => {
         throw factory({ reason: 'taken' })
       }),
     )
 
-    const response = await execute(endpoint, request('/conflict'))
+    const response = await execute(route, request('/conflict'))
 
     expect(response.status).toBe(409)
     expect(await response.json()).toEqual({ reason: 'taken' })
@@ -166,7 +166,7 @@ describe('onError handlers (runtime)', () => {
 
   it('exposes error info on the handler context', async () => {
     let seen: { name?: string; status?: number; stage?: string; error?: unknown } = {}
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/boom')
         .handle(() => {
           throw createError('INTERNAL_ERROR', 503, { why: 'down' })
@@ -177,7 +177,7 @@ describe('onError handlers (runtime)', () => {
         }),
     )
 
-    await execute(endpoint, request('/boom'))
+    await execute(route, request('/boom'))
 
     expect(seen.name).toBe('INTERNAL_ERROR')
     expect(seen.status).toBe(503)
@@ -206,13 +206,13 @@ describe('builtin errors (factory style)', () => {
   })
 
   it('ValidationError falls back to a 400 response', async () => {
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/bad').handle(() => {
         throw ValidationError({ location: 'params', issues: [{ message: 'nope' }] })
       }),
     )
 
-    const response = await execute(endpoint, request('/bad'))
+    const response = await execute(route, request('/bad'))
 
     expect(response.status).toBe(400)
     expect(await response.json()).toMatchObject({
@@ -227,18 +227,18 @@ describe('builtin errors (factory style)', () => {
       headers: { 'content-type': 'application/json' },
       body: '{not json',
     })
-    const endpoint = asEndpoint(get('/body').handle(() => ({ ok: true })))
+    const route = asRoute(get('/body').handle(() => ({ ok: true })))
 
-    const response = await execute(endpoint, badJson)
+    const response = await execute(route, badJson)
 
     expect(response.status).toBe(400)
     expect(await response.json()).toMatchObject({ name: 'PARSE_ERROR' })
   })
 
   it('NoHandlerError falls back to a 500 response', async () => {
-    const endpoint = asEndpoint(get('/nohandler'))
+    const route = asRoute(get('/nohandler'))
 
-    const response = await execute(endpoint, request('/nohandler'))
+    const response = await execute(route, request('/nohandler'))
 
     expect(response.status).toBe(500)
     expect(await response.json()).toMatchObject({ name: 'NO_HANDLER_ERROR' })

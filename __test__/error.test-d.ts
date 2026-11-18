@@ -1,8 +1,8 @@
+import type { StandardSchemaIssue } from '../packages/core/src/types/schema.ts'
 import { onError } from '../src/index.ts'
 import type { ErrorCode, ErrorContext, ErrorContextOf, PayloadOf, StatusOf } from '../src/index.ts'
-import type { StandardSchemaIssue } from '../src/types/schema.ts'
 
-declare module '../src/global.ts' {
+declare module '../packages/core/src/global.ts' {
   interface ErrorMap {
     CONFLICT_ERROR: { reason: string; retryAfter: number }
   }

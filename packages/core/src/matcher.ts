@@ -1,26 +1,26 @@
-import type { RuntimeEndpoint } from './endpoint.ts'
+import type { RuntimeRoute } from './route.ts'
 
 export interface Matcher {
-  readonly match: (method: string, path: string) => RuntimeEndpoint | undefined
+  readonly match: (method: string, path: string) => RuntimeRoute | undefined
 }
 
 interface Candidate {
-  readonly endpoint: RuntimeEndpoint
+  readonly route: RuntimeRoute
   readonly method: string
   readonly patternParts: readonly string[]
 }
 
-export function createMatcher(endpoints: readonly RuntimeEndpoint[]): Matcher {
-  const candidates: Candidate[] = endpoints.map((endpoint) => ({
-    endpoint,
-    method: endpoint['~method'],
-    patternParts: splitPath(endpoint['~path']),
+export function createMatcher(routes: readonly RuntimeRoute[]): Matcher {
+  const candidates: Candidate[] = routes.map((route) => ({
+    route,
+    method: route['~method'],
+    patternParts: splitPath(route['~path']),
   }))
 
   return {
     match(method, path) {
       const pathParts = splitPath(path)
-      let best: RuntimeEndpoint | undefined
+      let best: RuntimeRoute | undefined
       let bestScore = -1
 
       for (const candidate of candidates) {
@@ -32,7 +32,7 @@ export function createMatcher(endpoints: readonly RuntimeEndpoint[]): Matcher {
 
         const total = (exact ? 1000 : 0) + score
         if (total > bestScore) {
-          best = candidate.endpoint
+          best = candidate.route
           bestScore = total
         }
       }

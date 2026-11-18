@@ -8,9 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@monocon/cli':
+      '@monocon/compiler':
         specifier: workspace:*
-        version: link:cli
+        version: link:packages/compiler
+      '@monocon/core':
+        specifier: workspace:*
+        version: link:packages/core
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -52,7 +55,7 @@ importers:
         specifier: ^5.0.3
         version: 5.1.0(@types/node@26.6.6)(@vitest/coverage-v8@5.0.3)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
 
-  cli:
+  packages/compiler:
     dependencies:
       cac:
         specifier: ^6
@@ -70,11 +73,17 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  packages/core:
+    dependencies:
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+
   playground:
     devDependencies:
-      '@monocon/cli':
+      '@monocon/compiler':
         specifier: workspace:*
-        version: link:../cli
+        version: link:../packages/compiler
       monocon:
         specifier: workspace:*
         version: link:..

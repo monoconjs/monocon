@@ -1,11 +1,11 @@
-import type { EndpointMiddlewareContext } from '../global.ts'
+import type { RouteMiddlewareContext } from '../global.ts'
 import type { MaybePromise, ProvidedOfHook, Simplify } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 import type { ErrorCode, ErrorContextOf } from './error.ts'
 
-export type MiddlewareFor<Path extends string> = Path extends keyof EndpointMiddlewareContext
-  ? EndpointMiddlewareContext[Path] extends object
-    ? EndpointMiddlewareContext[Path]
+export type MiddlewareFor<Path extends string> = Path extends keyof RouteMiddlewareContext
+  ? RouteMiddlewareContext[Path] extends object
+    ? RouteMiddlewareContext[Path]
     : {}
   : {}
 

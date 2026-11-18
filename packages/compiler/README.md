@@ -1,13 +1,13 @@
-# @monocon/cli
+# @monocon/compiler
 
-The code generation CLI for [monocon](https://www.npmjs.com/package/monocon). It scans your endpoint and middleware declarations, generates type declarations that map middleware context onto matched endpoints, and compiles sources for bundlers.
+The code generation CLI for [monocon](https://www.npmjs.com/package/monocon). It scans your route and middleware declarations, generates type declarations that map middleware context onto matched routes, and compiles sources for bundlers.
 
 This package is bundled as a dependency of `monocon`, so installing `monocon` gives you the `monocon` command. You can also install it directly if you only need the tooling.
 
 ## Install
 
 ```sh
-npm install -D @monocon/cli
+npm install -D @monocon/compiler
 ```
 
 Requires Node.js 22 or later.
@@ -24,7 +24,7 @@ monocon build              # compile sources to .monocon-dist for bundlers
 
 Scans the entry files configured in `monocon.config.ts` and writes to `.monocon/`:
 
-- `types.d.ts` — module augmentation that maps matched middleware to each endpoint path, so handler contexts are typed with the values your middleware provides.
+- `types.d.ts` — module augmentation that maps matched middleware to each route path, so handler contexts are typed with the values your middleware provides.
 - `registry.mjs` / `registry.d.mts` — a barrel re-exporting all declarations, consumed by `bootstrap()` at runtime.
 
 If a command is appended, it runs after generation.
@@ -48,7 +48,7 @@ Runs generation, then compiles the entry files to `.monocon-dist/`, injecting th
 Create `monocon.config.ts` in your project root:
 
 ```ts
-import { defineConfig } from '@monocon/cli'
+import { defineConfig } from '@monocon/compiler'
 
 export default defineConfig({
   entry: ['src/**/*.ts'],

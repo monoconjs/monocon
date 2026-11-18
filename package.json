@@ -1,7 +1,7 @@
 {
   "name": "monocon",
   "version": "0.0.3",
-  "description": "A web-standard HTTP framework for TypeScript with typed, chainable endpoints and middleware-provided context inference.",
+  "description": "A web-standard HTTP framework for TypeScript with typed, chainable routes and middleware-provided context inference.",
   "keywords": [
     "framework",
     "http",
@@ -68,7 +68,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm --filter @monocon/cli build && tsdown && pnpm --filter playground build",
+    "build": "pnpm --filter @monocon/compiler build && pnpm --filter @monocon/core build && tsdown && pnpm --filter playground build",
     "check:package": "publint && attw --pack .",
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
     "test": "vitest run && pnpm -r test",
@@ -82,7 +82,8 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@monocon/cli": "workspace:*",
+    "@monocon/compiler": "workspace:*",
+    "@monocon/core": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {

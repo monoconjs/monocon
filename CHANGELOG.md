@@ -24,13 +24,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [0.0.2] - 2026-11-16
 
-Skipped to keep the version number in sync with `@monocon/cli`.
+Skipped to keep the version number in sync with `@monocon/compiler`.
 
 ## [0.0.1] - 2026-11-16
 
 ### Added
 
-- Initial release: typed, chainable endpoints with middleware-provided context inference.
+- Initial release: typed, chainable routes with middleware-provided context inference.
 - Route matching, request execution, and `bootstrap()` server startup.
 - Code generation CLI with `.monocon` type declarations and `monocon build` for bundler output.
 

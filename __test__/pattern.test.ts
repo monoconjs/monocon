@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { middleware } from '../src/middleware.ts'
-import { globToRegExp, matchMiddlewares, patternMatches } from '../src/pattern.ts'
+import { middleware } from '../packages/core/src/middleware.ts'
+import { globToRegExp, matchMiddlewares, patternMatches } from '../packages/core/src/pattern.ts'
 
 describe('pattern matching', () => {
   it('treats * as matching the whole path tree', () => {

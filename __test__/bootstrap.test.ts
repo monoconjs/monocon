@@ -1,14 +1,14 @@
 import { z } from 'zod'
 
+import { createMatcher } from '../packages/core/src/matcher.ts'
+import type { RuntimeMiddleware } from '../packages/core/src/middleware.ts'
+import type { RuntimeRoute } from '../packages/core/src/route.ts'
 import { collectDeclarations, createFetchHandler } from '../src/bootstrap.ts'
-import type { RuntimeEndpoint } from '../src/endpoint.ts'
 import { get, post } from '../src/index.ts'
 import { middleware } from '../src/index.ts'
-import { createMatcher } from '../src/matcher.ts'
-import type { RuntimeMiddleware } from '../src/middleware.ts'
 
-function asEndpoint(value: unknown): RuntimeEndpoint {
-  return value as RuntimeEndpoint
+function asRoute(value: unknown): RuntimeRoute {
+  return value as RuntimeRoute
 }
 
 function asMiddleware(value: unknown): RuntimeMiddleware {
@@ -16,19 +16,19 @@ function asMiddleware(value: unknown): RuntimeMiddleware {
 }
 
 describe('collectDeclarations', () => {
-  it('separates endpoints from middlewares in a registry namespace', () => {
-    const endpoint = asEndpoint(get('/health').handle(() => ({ ok: true })))
+  it('separates routes from middlewares in a registry namespace', () => {
+    const route = asRoute(get('/health').handle(() => ({ ok: true })))
     const logger = asMiddleware(middleware('*', { onRequest: () => ({ id: 'r1' }) }))
-    const registry = { health: endpoint, logger, version: '1.0.0', sum: () => 1 }
+    const registry = { health: route, logger, version: '1.0.0', sum: () => 1 }
 
     const result = collectDeclarations(registry)
 
-    expect(result.endpoints).toEqual([endpoint])
+    expect(result.routes).toEqual([route])
     expect(result.middlewares).toEqual([logger])
   })
 
   it('returns empty collections for an empty registry', () => {
-    expect(collectDeclarations({})).toEqual({ endpoints: [], middlewares: [] })
+    expect(collectDeclarations({})).toEqual({ routes: [], middlewares: [] })
   })
 })
 
@@ -55,8 +55,8 @@ describe('createFetchHandler', () => {
   })
 
   it('still parses the body of a matched route with an invalid JSON body', async () => {
-    const endpoint = asEndpoint(post('/health').handle(() => ({ ok: true })))
-    const handler = createFetchHandler(createMatcher([endpoint]), [])
+    const route = asRoute(post('/health').handle(() => ({ ok: true })))
+    const handler = createFetchHandler(createMatcher([route]), [])
     const request = new Request('http://localhost/health', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -69,9 +69,9 @@ describe('createFetchHandler', () => {
     expect(await response.json()).toMatchObject({ name: 'PARSE_ERROR' })
   })
 
-  it('executes the matched endpoint and returns its response', async () => {
-    const endpoint = asEndpoint(get('/health').handle(() => ({ status: 'ok' })))
-    const handler = createFetchHandler(createMatcher([endpoint]), [])
+  it('executes the matched route and returns its response', async () => {
+    const route = asRoute(get('/health').handle(() => ({ status: 'ok' })))
+    const handler = createFetchHandler(createMatcher([route]), [])
 
     const response = await handler(new Request('http://localhost/health'))
 
@@ -80,12 +80,12 @@ describe('createFetchHandler', () => {
   })
 
   it('converts ValidationError into a 400 response', async () => {
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/users/:id', {
         params: z.object({ id: z.coerce.number() }),
       }).handle((ctx) => ({ id: ctx.params.id })),
     )
-    const handler = createFetchHandler(createMatcher([endpoint]), [])
+    const handler = createFetchHandler(createMatcher([route]), [])
 
     const response = await handler(new Request('http://localhost/users/abc'))
 
@@ -99,13 +99,13 @@ describe('createFetchHandler', () => {
   it('applies matched middleware hooks', async () => {
     const logger = asMiddleware(middleware('*', { onRequest: () => ({ requestId: 'r1' }) }))
     let seen: unknown
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/health').handle((ctx) => {
         seen = ctx
         return { ok: true }
       }),
     )
-    const handler = createFetchHandler(createMatcher([endpoint]), [logger])
+    const handler = createFetchHandler(createMatcher([route]), [logger])
 
     await handler(new Request('http://localhost/health'))
 

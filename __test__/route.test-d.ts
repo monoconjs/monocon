@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
 import { get } from '../src/index.ts'
-import type { Endpoint, EndpointBuilder, EndpointState } from '../src/index.ts'
+import type { Route, RouteBuilder, RouteState } from '../src/index.ts'
 
 type BuilderMethods<Value> = Exclude<keyof Value, `~${string}`>
 
-describe('endpoint builder', () => {
+describe('route builder', () => {
   it('chains stages in order', () => {
-    const endpoint = get('/users/:id', {
+    const route = get('/users/:id', {
       meta: { auth: true },
       params: z.object({ id: z.coerce.number() }),
       query: z.object({ page: z.coerce.number() }),
@@ -29,14 +29,14 @@ describe('endpoint builder', () => {
       .afterHandle(() => {})
       .onResponse((_ctx, response) => response)
 
-    expectTypeOf(endpoint['~path']).toEqualTypeOf<'/users/:id'>()
-    expectTypeOf(endpoint['~method']).toEqualTypeOf<'GET'>()
+    expectTypeOf(route['~path']).toEqualTypeOf<'/users/:id'>()
+    expectTypeOf(route['~method']).toEqualTypeOf<'GET'>()
   })
 
-  it('returns an Endpoint from handle', () => {
-    const endpoint = get('/final').handle(() => 'ok')
+  it('returns an Route from handle', () => {
+    const route = get('/final').handle(() => 'ok')
 
-    expectTypeOf(endpoint).toMatchTypeOf<Endpoint<'GET', '/final'>>()
+    expectTypeOf(route).toMatchTypeOf<Route<'GET', '/final'>>()
   })
 
   it('allows skipping stages', () => {
@@ -104,7 +104,7 @@ describe('endpoint builder', () => {
     // @ts-expect-error afterHandle is unavailable before handle
     fresh.afterHandle(() => {})
 
-    type AfterHandle = EndpointBuilder<'handle', EndpointState<'GET', '/f'>>
+    type AfterHandle = RouteBuilder<'handle', RouteState<'GET', '/f'>>
     expectTypeOf<keyof AfterHandle>().toEqualTypeOf<'afterHandle' | 'onResponse' | 'onError'>()
   })
 })

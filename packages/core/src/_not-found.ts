@@ -1,6 +1,6 @@
-import type { RuntimeEndpoint } from './endpoint.ts'
+import type { RuntimeRoute } from './route.ts'
 
-const NOT_FOUND_HOOKS: RuntimeEndpoint['~hooks'] = {
+const NOT_FOUND_HOOKS: RuntimeRoute['~hooks'] = {
   onRequest: [],
   beforeHandle: [],
   afterHandle: [],
@@ -8,7 +8,7 @@ const NOT_FOUND_HOOKS: RuntimeEndpoint['~hooks'] = {
   onError: [],
 }
 
-export function notFoundEndpoint(path: string): RuntimeEndpoint {
+export function notFoundRoute(path: string): RuntimeRoute {
   return {
     '~method': 'ALL',
     '~path': path,
