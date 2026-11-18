@@ -4,14 +4,23 @@ All notable changes to `monocon` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-11-18
+
+### Added
+
+- Add platform adapters as `monocon/node`, `monocon/bun`, `monocon/deno`, and `monocon/workers` subpaths, each exporting a `start()` entry.
+- Allow `monocon build` to run an appended command after compilation.
+- Allow error factories returned by `defineError()` to be called directly or constructed with `new`.
 
 ### Changed
 
 - Split the project into four packages: `@monocon/core` (platform-neutral runtime), `@monocon/compiler` (codegen CLI), `@monocon/adapter` (platform adapters), and `monocon` (umbrella re-export).
-- Replace `bootstrap()` with per-platform `start()` functions exported from `monocon/node`, `monocon/bun`, `monocon/deno`, and `monocon/workers`. Bun, Deno and Workers adapters are currently placeholders.
+- Replace `bootstrap()` with per-platform `start()` functions. Bun, Deno and Workers adapters are currently placeholders.
+- Rename `middleware()` to `defineMiddleware(hooks, pattern)` with the pattern moved to the second argument.
+- Rename `error()` to `defineError()`.
 - Rename all `endpoint` terminology to `route` in the public API and generated types.
 - Point generated global augmentation at `@monocon/core/global`.
+- Move server contracts (`Adapter`, `ServerConfig`, `RunningServer`) into `@monocon/adapter`; keep `FetchHandler` in `@monocon/core`.
 
 ## [0.0.3] - 2026-11-17
 

@@ -1,6 +1,6 @@
 {
   "name": "@monocon/core",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Platform-neutral core runtime for monocon.",
   "license": "MIT",
   "files": [
