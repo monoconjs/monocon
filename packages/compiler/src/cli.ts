@@ -105,11 +105,11 @@ async function generateAndReport(cwd: string, configFile: string): Promise<void>
 
   for (const warning of generated.warnings) console.warn(`[monocon] warning: ${warning}`)
 
-  const endpoints = generated.declarations.filter((item) => item.kind === 'endpoint').length
+  const routes = generated.declarations.filter((item) => item.kind === 'route').length
   const middlewares = generated.declarations.filter((item) => item.kind === 'middleware').length
   const errors = generated.declarations.filter((item) => item.kind === 'error').length
   console.log(
-    `[monocon] Generated .monocon from ${endpoints} endpoint(s), ${middlewares} middleware(s) and ${errors} error(s)`,
+    `[monocon] Generated .monocon from ${routes} route(s), ${middlewares} middleware(s) and ${errors} error(s)`,
   )
 }
 

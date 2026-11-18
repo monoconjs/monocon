@@ -1,4 +1,4 @@
-import type { RuntimeEndpoint } from '../src/endpoint.ts'
+import type { RuntimeRoute } from '../packages/core/src/route.ts'
 import * as monocon from '../src/index.ts'
 
 const onRequestA = () => ({ a: 1 })
@@ -8,19 +8,19 @@ const handler = () => 'ok'
 const afterHandle = () => undefined
 const onResponse = () => undefined
 
-function isRuntimeEndpoint(value: object): value is RuntimeEndpoint {
+function isRuntimeRoute(value: object): value is RuntimeRoute {
   return '~method' in value && '~path' in value && '~hooks' in value
 }
 
-function asRuntime(value: object): RuntimeEndpoint {
-  if (!isRuntimeEndpoint(value)) {
-    throw new TypeError('Expected a runtime endpoint')
+function asRuntime(value: object): RuntimeRoute {
+  if (!isRuntimeRoute(value)) {
+    throw new TypeError('Expected a runtime route')
   }
   return value
 }
 
-describe('endpoint factory', () => {
-  it('creates endpoints for every HTTP method', () => {
+describe('route factory', () => {
+  it('creates routes for every HTTP method', () => {
     expect(asRuntime(monocon.get('/x'))['~method']).toBe('GET')
     expect(asRuntime(monocon.post('/x'))['~method']).toBe('POST')
     expect(asRuntime(monocon.put('/x'))['~method']).toBe('PUT')
@@ -44,10 +44,10 @@ describe('endpoint factory', () => {
   })
 
   it('starts with no handler and empty hooks', () => {
-    const endpoint = asRuntime(monocon.get('/fresh'))
+    const route = asRuntime(monocon.get('/fresh'))
 
-    expect(endpoint['~handler']).toBeUndefined()
-    expect(endpoint['~hooks']).toEqual({
+    expect(route['~handler']).toBeUndefined()
+    expect(route['~hooks']).toEqual({
       onRequest: [],
       beforeHandle: [],
       afterHandle: [],
@@ -57,9 +57,9 @@ describe('endpoint factory', () => {
   })
 })
 
-describe('endpoint builder', () => {
+describe('route builder', () => {
   it('stores hooks in lifecycle order', () => {
-    const endpoint = asRuntime(
+    const route = asRuntime(
       monocon
         .get('/chain')
         .onRequest(onRequestA)
@@ -70,35 +70,35 @@ describe('endpoint builder', () => {
         .onResponse(onResponse),
     )
 
-    expect(endpoint['~hooks'].onRequest).toEqual([onRequestA, onRequestB])
-    expect(endpoint['~hooks'].beforeHandle).toEqual([beforeHandle])
-    expect(endpoint['~hooks'].afterHandle).toEqual([afterHandle])
-    expect(endpoint['~hooks'].onResponse).toEqual([onResponse])
-    expect(endpoint['~handler']).toBe(handler)
+    expect(route['~hooks'].onRequest).toEqual([onRequestA, onRequestB])
+    expect(route['~hooks'].beforeHandle).toEqual([beforeHandle])
+    expect(route['~hooks'].afterHandle).toEqual([afterHandle])
+    expect(route['~hooks'].onResponse).toEqual([onResponse])
+    expect(route['~handler']).toBe(handler)
   })
 
   it('returns the same builder across every stage', () => {
     const base = monocon.get('/chain')
     const afterHook = base.onRequest(() => ({}))
     const afterBeforeHandle = afterHook.beforeHandle(() => ({}))
-    const endpointAfterHandle = afterBeforeHandle.handle(() => 'ok')
-    const afterAfterHook = endpointAfterHandle.afterHandle(() => undefined)
+    const routeAfterHandle = afterBeforeHandle.handle(() => 'ok')
+    const afterAfterHook = routeAfterHandle.afterHandle(() => undefined)
     const final = afterAfterHook.onResponse(() => undefined)
 
     expect(asRuntime(afterHook)).toBe(asRuntime(base))
     expect(asRuntime(afterBeforeHandle)).toBe(asRuntime(base))
-    expect(asRuntime(endpointAfterHandle)).toBe(asRuntime(base))
+    expect(asRuntime(routeAfterHandle)).toBe(asRuntime(base))
     expect(asRuntime(afterAfterHook)).toBe(asRuntime(base))
     expect(asRuntime(final)).toBe(asRuntime(base))
   })
 
   it('allows skipping stages', () => {
-    const endpoint = asRuntime(monocon.get('/direct').handle(() => 'ok'))
+    const route = asRuntime(monocon.get('/direct').handle(() => 'ok'))
 
-    expect(endpoint['~hooks'].onRequest).toEqual([])
-    expect(endpoint['~hooks'].beforeHandle).toEqual([])
-    expect(endpoint['~hooks'].afterHandle).toEqual([])
-    expect(endpoint['~hooks'].onResponse).toEqual([])
-    expect(endpoint['~handler']).toBeTypeOf('function')
+    expect(route['~hooks'].onRequest).toEqual([])
+    expect(route['~hooks'].beforeHandle).toEqual([])
+    expect(route['~hooks'].afterHandle).toEqual([])
+    expect(route['~hooks'].onResponse).toEqual([])
+    expect(route['~handler']).toBeTypeOf('function')
   })
 })

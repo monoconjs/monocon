@@ -1,25 +1,25 @@
 import type { MaybePromise, Merge, ProvidedOfHook, Simplify } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 import type { ErrorCode, ErrorContextOf } from './error.ts'
-import type { EndpointMethod } from './http.ts'
+import type { RouteMethod } from './http.ts'
 import type { MiddlewareFor } from './middleware.ts'
 import type { InferOutput, Schema } from './schema.ts'
 
-export type EndpointMeta = Record<string, unknown>
+export type RouteMeta = Record<string, unknown>
 
-export interface EndpointOptions {
+export interface RouteOptions {
   params?: Schema
   query?: Schema
   body?: Schema
   headers?: Schema
   response?: Schema
-  meta?: EndpointMeta
+  meta?: RouteMeta
 }
 
-export interface EndpointState<
-  Method extends EndpointMethod = EndpointMethod,
+export interface RouteState<
+  Method extends RouteMethod = RouteMethod,
   Path extends string = string,
-  Options extends EndpointOptions = EndpointOptions,
+  Options extends RouteOptions = RouteOptions,
   Provided extends object = {},
 > {
   '~method': Method
@@ -47,7 +47,7 @@ export type PathParams<Path extends string> = Simplify<SegmentsToParams<SplitPat
 
 type AsObject<Value> = Value extends object ? Value : {}
 
-type OptionsOf<State extends EndpointState> = State['~options']
+type OptionsOf<State extends RouteState> = State['~options']
 
 type ParamsOf<Path extends string, Options> = Options extends {
   params: infer Parsed extends Schema
@@ -77,7 +77,7 @@ type HeaderNamesOf<Options> = Options extends { headers: infer Parsed extends Sc
   ? keyof AsObject<InferOutput<Parsed>> & string
   : string
 
-export type EndpointContext<State extends EndpointState> = Context<
+export type RouteContext<State extends RouteState> = Context<
   MiddlewareFor<State['~path']> & State['~provided'],
   ParamsOf<State['~path'], OptionsOf<State>>,
   QueryOf<OptionsOf<State>>,
@@ -88,32 +88,29 @@ export type EndpointContext<State extends EndpointState> = Context<
   HeaderNamesOf<OptionsOf<State>>
 >
 
-export type EndpointHook<State extends EndpointState> = (
-  ctx: EndpointContext<State>,
+export type RouteHook<State extends RouteState> = (
+  ctx: RouteContext<State>,
 ) => MaybePromise<object | Response | void>
 
 export type { ProvidedOfHook } from './_utils.ts'
 
-export type EndpointResult<Options extends EndpointOptions> =
-  | Response
-  | ResponseOutput<Options>
-  | void
+export type RouteResult<Options extends RouteOptions> = Response | ResponseOutput<Options> | void
 
-export type EndpointHandler<State extends EndpointState> = (
-  ctx: EndpointContext<State>,
-) => MaybePromise<EndpointResult<OptionsOf<State>>>
+export type RouteHandler<State extends RouteState> = (
+  ctx: RouteContext<State>,
+) => MaybePromise<RouteResult<OptionsOf<State>>>
 
-export type EndpointAfterHook<State extends EndpointState> = (
-  ctx: EndpointContext<State>,
+export type RouteAfterHook<State extends RouteState> = (
+  ctx: RouteContext<State>,
   result: ResponseOutput<OptionsOf<State>> | Response,
 ) => MaybePromise<ResponseOutput<OptionsOf<State>> | Response | void>
 
-export type EndpointResponseHook<State extends EndpointState> = (
-  ctx: EndpointContext<State>,
+export type RouteResponseHook<State extends RouteState> = (
+  ctx: RouteContext<State>,
   response: Response,
 ) => MaybePromise<Response | void>
 
-export type EndpointErrorContext<State extends EndpointState> = ErrorContextOf<
+export type RouteErrorContext<State extends RouteState> = ErrorContextOf<
   ErrorCode,
   MiddlewareFor<State['~path']> & State['~provided'],
   ParamsOf<State['~path'], OptionsOf<State>>,
@@ -125,66 +122,48 @@ export type EndpointErrorContext<State extends EndpointState> = ErrorContextOf<
   HeaderNamesOf<OptionsOf<State>>
 >
 
-export type EndpointErrorHook<State extends EndpointState> = (
-  ctx: EndpointErrorContext<State>,
+export type RouteErrorHook<State extends RouteState> = (
+  ctx: RouteErrorContext<State>,
 ) => MaybePromise<Response | void>
 
-export type EndpointStage = 'onRequest' | 'beforeHandle' | 'handle' | 'afterHandle' | 'onResponse'
+export type RouteStage = 'onRequest' | 'beforeHandle' | 'handle' | 'afterHandle' | 'onResponse'
 
 type FinalStage = 'handle' | 'afterHandle' | 'onResponse'
 
-type WithProvided<State extends EndpointState, Fn> = EndpointState<
+type WithProvided<State extends RouteState, Fn> = RouteState<
   State['~method'],
   State['~path'],
   OptionsOf<State>,
   State['~provided'] & ProvidedOfHook<Fn>
 >
 
-interface EndpointMethods<State extends EndpointState> {
-  onRequest: <Fn extends EndpointHook<State>>(
+interface RouteMethods<State extends RouteState> {
+  onRequest: <Fn extends RouteHook<State>>(
     hook: Fn,
-  ) => EndpointBuilder<'onRequest', WithProvided<State, Fn>>
+  ) => RouteBuilder<'onRequest', WithProvided<State, Fn>>
 
-  beforeHandle: <Fn extends EndpointHook<State>>(
+  beforeHandle: <Fn extends RouteHook<State>>(
     hook: Fn,
-  ) => EndpointBuilder<'beforeHandle', WithProvided<State, Fn>>
+  ) => RouteBuilder<'beforeHandle', WithProvided<State, Fn>>
 
   handle: (
-    handler: EndpointHandler<State>,
-  ) => Endpoint<State['~method'], State['~path'], OptionsOf<State>, State['~provided']>
+    handler: RouteHandler<State>,
+  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided']>
 
   afterHandle: <Result extends ResponseOutput<OptionsOf<State>> | Response>(
-    hook: (ctx: EndpointContext<State>, result: Result) => MaybePromise<Result | void>,
-  ) => Endpoint<
-    State['~method'],
-    State['~path'],
-    OptionsOf<State>,
-    State['~provided'],
-    'afterHandle'
-  >
+    hook: (ctx: RouteContext<State>, result: Result) => MaybePromise<Result | void>,
+  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided'], 'afterHandle'>
 
   onResponse: (
-    hook: EndpointResponseHook<State>,
-  ) => Endpoint<
-    State['~method'],
-    State['~path'],
-    OptionsOf<State>,
-    State['~provided'],
-    'onResponse'
-  >
+    hook: RouteResponseHook<State>,
+  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided'], 'onResponse'>
 
   onError: (
-    hook: EndpointErrorHook<State>,
-  ) => Endpoint<
-    State['~method'],
-    State['~path'],
-    OptionsOf<State>,
-    State['~provided'],
-    'onResponse'
-  >
+    hook: RouteErrorHook<State>,
+  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided'], 'onResponse'>
 }
 
-type AvailableMethods<Stage extends EndpointStage> =
+type AvailableMethods<Stage extends RouteStage> =
   | (Stage extends 'onRequest' ? 'onRequest' : never)
   | (Stage extends 'onRequest' | 'beforeHandle' ? 'beforeHandle' : never)
   | (Stage extends 'onRequest' | 'beforeHandle' ? 'handle' : never)
@@ -192,25 +171,25 @@ type AvailableMethods<Stage extends EndpointStage> =
   | (Stage extends 'handle' | 'afterHandle' | 'onResponse' ? 'onResponse' : never)
   | 'onError'
 
-export type EndpointBuilder<Stage extends EndpointStage, State extends EndpointState> = Pick<
-  EndpointMethods<State>,
+export type RouteBuilder<Stage extends RouteStage, State extends RouteState> = Pick<
+  RouteMethods<State>,
   AvailableMethods<Stage>
 >
 
-export type Endpoint<
-  Method extends EndpointMethod = EndpointMethod,
+export type Route<
+  Method extends RouteMethod = RouteMethod,
   Path extends string = string,
-  Options extends EndpointOptions = {},
+  Options extends RouteOptions = {},
   Provided extends object = {},
   Stage extends FinalStage = 'handle',
-> = EndpointState<Method, Path, Options, Provided> & {
-  '~handler': EndpointHandler<EndpointState<Method, Path, Options, Provided>>
-} & Pick<EndpointMethods<EndpointState<Method, Path, Options, Provided>>, AvailableMethods<Stage>>
+> = RouteState<Method, Path, Options, Provided> & {
+  '~handler': RouteHandler<RouteState<Method, Path, Options, Provided>>
+} & Pick<RouteMethods<RouteState<Method, Path, Options, Provided>>, AvailableMethods<Stage>>
 
-export type EndpointFactory<Method extends EndpointMethod> = <
+export type RouteFactory<Method extends RouteMethod> = <
   Path extends string,
-  Options extends EndpointOptions = {},
+  Options extends RouteOptions = {},
 >(
   path: Path,
   options?: Options,
-) => EndpointBuilder<'onRequest', EndpointState<Method, Path, Options>>
+) => RouteBuilder<'onRequest', RouteState<Method, Path, Options>>

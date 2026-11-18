@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
-import type { RuntimeEndpoint } from '../src/endpoint.ts'
-import { execute } from '../src/execute.ts'
+import { execute } from '../packages/core/src/execute.ts'
+import type { RuntimeMiddleware } from '../packages/core/src/middleware.ts'
+import type { RuntimeRoute } from '../packages/core/src/route.ts'
 import { get } from '../src/index.ts'
 import { middleware } from '../src/index.ts'
-import type { RuntimeMiddleware } from '../src/middleware.ts'
 
-function asEndpoint(value: unknown): RuntimeEndpoint {
-  return value as RuntimeEndpoint
+function asRoute(value: unknown): RuntimeRoute {
+  return value as RuntimeRoute
 }
 
 function asMiddleware(value: unknown): RuntimeMiddleware {
@@ -26,7 +26,7 @@ describe('execute', () => {
   it('runs the full lifecycle in order and merges provided values', async () => {
     const calls: string[] = []
 
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/users/:id')
         .onRequest(() => {
           calls.push('onRequest')
@@ -53,14 +53,14 @@ describe('execute', () => {
         }),
     )
 
-    const response = await execute(endpoint, request('/users/42'))
+    const response = await execute(route, request('/users/42'))
 
     expect(calls).toEqual(['onRequest', 'beforeHandle', 'handle', 'afterHandle', 'onResponse'])
     expect(await response.json()).toEqual({ ok: true, extra: 1 })
   })
 
   it('validates params and query, using parsed values in the handler', async () => {
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/users/:id', {
         params: z.object({ id: z.coerce.number() }),
         query: z.object({ page: z.coerce.number() }),
@@ -70,19 +70,19 @@ describe('execute', () => {
       })),
     )
 
-    const response = await execute(endpoint, request('/users/42?page=3'))
+    const response = await execute(route, request('/users/42?page=3'))
 
     expect(await response.json()).toEqual({ id: 42, page: 3 })
   })
 
   it('returns a 400 response when a schema fails', async () => {
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/users/:id', {
         params: z.object({ id: z.coerce.number() }),
       }).handle((ctx) => ({ id: ctx.params.id })),
     )
 
-    const response = await execute(endpoint, request('/users/abc'))
+    const response = await execute(route, request('/users/abc'))
 
     expect(response.status).toBe(400)
     expect(await response.json()).toMatchObject({
@@ -92,14 +92,14 @@ describe('execute', () => {
   })
 
   it('parses a JSON body and validates it', async () => {
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/users', {
         body: z.object({ name: z.string() }),
       }).handle((ctx: { body: { name: string } }) => ({ name: ctx.body.name })),
     )
 
     const response = await execute(
-      endpoint,
+      route,
       request('/users', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -110,7 +110,7 @@ describe('execute', () => {
     expect(await response.json()).toEqual({ name: 'alice' })
   })
 
-  it('runs matched middleware hooks around the endpoint', async () => {
+  it('runs matched middleware hooks around the route', async () => {
     const calls: string[] = []
     let handlerCtx: unknown
     const logger = asMiddleware(
@@ -133,7 +133,7 @@ describe('execute', () => {
         },
       }),
     )
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/admin/users').handle((ctx) => {
         calls.push('handle')
         handlerCtx = ctx
@@ -141,7 +141,7 @@ describe('execute', () => {
       }),
     )
 
-    const response = await execute(endpoint, request('/admin/users'), {
+    const response = await execute(route, request('/admin/users'), {
       middlewares: [logger, auth],
     })
 
@@ -151,29 +151,29 @@ describe('execute', () => {
   })
 
   it('short-circuits when a hook returns a Response', async () => {
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/secret')
         .beforeHandle(() => new Response('denied', { status: 403 }))
         .handle(throwingHandler),
     )
 
-    const response = await execute(endpoint, request('/secret'))
+    const response = await execute(route, request('/secret'))
 
     expect(response.status).toBe(403)
     expect(await response.text()).toBe('denied')
   })
 
   it('skips stages that are not registered', async () => {
-    const endpoint = asEndpoint(get('/health').handle(() => ({ status: 'ok' })))
+    const route = asRoute(get('/health').handle(() => ({ status: 'ok' })))
 
-    const response = await execute(endpoint, request('/health'))
+    const response = await execute(route, request('/health'))
 
     expect(await response.json()).toEqual({ status: 'ok' })
   })
 
   it('skips body parsing when skipBody is set', async () => {
     let seenBody: unknown = 'unset'
-    const endpoint = asEndpoint(
+    const route = asRoute(
       get('/missing').handle((ctx) => {
         seenBody = ctx.body
         return { ok: true }
@@ -181,7 +181,7 @@ describe('execute', () => {
     )
 
     const response = await execute(
-      endpoint,
+      route,
       request('/missing', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

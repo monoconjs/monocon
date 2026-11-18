@@ -1,8 +1,8 @@
 # monocon
 
-A web-standard HTTP framework for TypeScript with typed, chainable endpoints and middleware-provided context inference.
+A web-standard HTTP framework for TypeScript with typed, chainable routes and middleware-provided context inference.
 
-Monocon is built on the web platform primitives (`Request` / `Response`), uses Zod for runtime validation, and generates type declarations that let middleware inject typed context into the endpoints they match.
+Monocon is built on the web platform primitives (`Request` / `Response`), uses Zod for runtime validation, and generates type declarations that let middleware inject typed context into the routes they match.
 
 ## Install
 
@@ -14,10 +14,10 @@ Requires Node.js 22 or later.
 
 ## Quick start
 
-Define an endpoint and export it. Then start the server with `bootstrap()`.
+Define a route and export it. Then start the server with `bootstrap()`.
 
 ```ts
-// src/endpoints/users.ts
+// src/routes/users.ts
 import { get } from 'monocon'
 import { z } from 'zod'
 
@@ -52,9 +52,9 @@ npx monocon gen tsx src/index.ts
 
 `bootstrap()` loads `configuration.ts` from the working directory (or its `src/` directory), discovers the generated registry at `.monocon/registry.mjs`, and starts an HTTP server. If no config file is found, it defaults to port `3000`.
 
-## Endpoints
+## Routes
 
-Use `get`, `post`, `put`, `patch`, `del`, `head`, `options`, or `all` to declare an endpoint. Options are validated with Zod schemas for `params`, `query`, `body`, and `response`.
+Use `get`, `post`, `put`, `patch`, `del`, `head`, `options`, or `all` to declare a route. Options are validated with Zod schemas for `params`, `query`, `body`, and `response`.
 
 ```ts
 import { post } from 'monocon'
@@ -67,11 +67,11 @@ export const createUser = post('/users', {
 }).handle((ctx) => ({ id: 1, name: ctx.body.name }))
 ```
 
-Each endpoint is a chain of lifecycle hooks:
+Each route is a chain of lifecycle hooks:
 
 - `onRequest(ctx)` — runs first; its return value is added to the context.
 - `beforeHandle(ctx)` — runs before the handler; its return value is added to the context.
-- `handle(ctx)` — the endpoint handler (required); its return value is the response body.
+- `handle(ctx)` — the route handler (required); its return value is the response body.
 - `afterHandle(ctx, result)` — transforms the handler result.
 - `onResponse(ctx, response)` — transforms the final response.
 
@@ -86,7 +86,7 @@ const tracked = get('/users/:id')
 
 ## Middleware
 
-A middleware matches endpoints by path pattern and contributes typed context to them. Patterns accept a glob string or an `{ include, exclude }` object.
+A middleware matches routes by path pattern and contributes typed context to them. Patterns accept a glob string or an `{ include, exclude }` object.
 
 ```ts
 // src/middlewares/logger.ts
@@ -105,7 +105,7 @@ export const auth = middleware(
 )
 ```
 
-Monocon generates a declaration (`.monocon/types.d.ts`) that maps each matched middleware to its endpoint path. As a result, a handler can consume `ctx.requestId`, `ctx.user`, and `ctx.role` with full type safety — no manual context typing required.
+Monocon generates a declaration (`.monocon/types.d.ts`) that maps each matched middleware to its route path. As a result, a handler can consume `ctx.requestId`, `ctx.user`, and `ctx.role` with full type safety — no manual context typing required.
 
 ## Configuration
 
@@ -139,7 +139,7 @@ export default defineConfig({
 
 ## CLI
 
-The `monocon` command is provided by the bundled `@monocon/cli` dependency.
+The `monocon` command is provided by the bundled `@monocon/compiler` dependency.
 
 ```sh
 monocon gen [command...]   # generate .monocon declarations, then optionally run a command

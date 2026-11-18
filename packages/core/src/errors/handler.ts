@@ -1,6 +1,6 @@
 import { createContext, type RuntimeContext } from '../context.ts'
-import type { RuntimeEndpoint } from '../endpoint.ts'
 import type { RuntimeMiddleware } from '../middleware.ts'
+import type { RuntimeRoute } from '../route.ts'
 import type { ErrorCode, ErrorHandlerOf, ErrorStage } from '../types/error.ts'
 import type { ErrorHook } from './factory.ts'
 
@@ -30,13 +30,13 @@ export interface ErrorDispatch {
   readonly request: Request
   readonly url: URL
   readonly context?: RuntimeContext
-  readonly endpoint?: RuntimeEndpoint
+  readonly route?: RuntimeRoute
   readonly middlewares?: readonly RuntimeMiddleware[]
   readonly stage: ErrorStage
 }
 
 export async function handleError(dispatch: ErrorDispatch): Promise<Response> {
-  const { error: thrown, request, url, context, endpoint, middlewares, stage } = dispatch
+  const { error: thrown, request, url, context, route, middlewares, stage } = dispatch
 
   const name = resolveName(thrown)
   const status = resolveStatus(thrown)
@@ -54,7 +54,7 @@ export async function handleError(dispatch: ErrorDispatch): Promise<Response> {
   const errorContext = { ...base, name, payload, status, stage }
 
   const handlers: ErrorHook[] = []
-  if (endpoint) handlers.push(...endpoint['~hooks'].onError)
+  if (route) handlers.push(...route['~hooks'].onError)
   if (middlewares) handlers.push(...middlewareErrorHooks(middlewares))
   for (const entry of globalHandlers) {
     if (entry.names === undefined || entry.names.includes(name)) handlers.push(entry.handler)

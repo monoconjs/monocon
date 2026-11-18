@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Security fixes are applied to the latest published version of `@monocon/cli`. Older versions are not maintained.
+Security fixes are applied to the latest published version of `@monocon/compiler`. Older versions are not maintained.
 
 | Version | Supported          |
 | ------- | ------------------ |
@@ -23,4 +23,4 @@ You should receive an acknowledgement within a few days. If a fix is available, 
 
 ## Scope
 
-Report issues that affect the security of `@monocon/cli` or its users, such as unsafe handling of configuration files or generated output. Please avoid reporting general bugs, feature requests, or vulnerabilities in dependencies that do not originate in this project.
+Report issues that affect the security of `@monocon/compiler` or its users, such as unsafe handling of configuration files or generated output. Please avoid reporting general bugs, feature requests, or vulnerabilities in dependencies that do not originate in this project.

@@ -1,6 +1,14 @@
+import { resolve } from 'node:path'
+
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@monocon/core/global': resolve(__dirname, 'packages/core/src/global.ts'),
+      '@monocon/core': resolve(__dirname, 'packages/core/src/index.ts'),
+    },
+  },
   test: {
     globals: true,
     environment: 'node',

@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'
 
-import type { Declaration, EndpointDecl, ErrorDecl, MiddlewareDecl } from './analyze.ts'
+import type { Declaration, RouteDecl, ErrorDecl, MiddlewareDecl } from './analyze.ts'
 import { analyzeEntries } from './analyze.ts'
 import { expandEntries, loadConfig } from './config.ts'
 import { matchMiddlewares } from './match.ts'
@@ -23,13 +23,13 @@ export async function generate(cwd: string, configFile: string): Promise<Generat
   const { declarations, warnings } = await analyzeEntries(entryFiles)
 
   const outputDir = resolve(cwd, '.monocon')
-  const endpoints = declarations.filter((item): item is EndpointDecl => item.kind === 'endpoint')
+  const routes = declarations.filter((item): item is RouteDecl => item.kind === 'route')
   const middlewares = declarations.filter(
     (item): item is MiddlewareDecl => item.kind === 'middleware',
   )
   const errors = declarations.filter((item): item is ErrorDecl => item.kind === 'error')
 
-  const types = renderTypes(outputDir, endpoints, middlewares, errors)
+  const types = renderTypes(outputDir, routes, middlewares, errors)
   const registry = renderRegistry(outputDir, declarations)
   const registryTypes = renderRegistryTypes(outputDir, declarations)
 
@@ -51,19 +51,19 @@ export async function generate(cwd: string, configFile: string): Promise<Generat
 
 function renderTypes(
   outputDir: string,
-  endpoints: EndpointDecl[],
+  routes: RouteDecl[],
   middlewares: MiddlewareDecl[],
   errors: ErrorDecl[],
 ): string {
   const rows: Array<{ path: string; matched: MiddlewareDecl[] }> = []
   const seenPaths = new Set<string>()
 
-  for (const endpoint of endpoints) {
-    if (seenPaths.has(endpoint.path)) continue
-    seenPaths.add(endpoint.path)
+  for (const route of routes) {
+    if (seenPaths.has(route.path)) continue
+    seenPaths.add(route.path)
 
-    const matched = matchMiddlewares(middlewares, endpoint.path)
-    if (matched.length > 0) rows.push({ path: endpoint.path, matched })
+    const matched = matchMiddlewares(middlewares, route.path)
+    if (matched.length > 0) rows.push({ path: route.path, matched })
   }
 
   const imports = collectImports(
@@ -80,8 +80,8 @@ function renderTypes(
     '',
     ...imports,
     '',
-    "declare module 'monocon/global' {",
-    '  interface EndpointMiddlewareContext {',
+    "declare module '@monocon/core/global' {",
+    '  interface RouteMiddlewareContext {',
   ]
 
   for (const row of rows) {
@@ -123,7 +123,7 @@ function collectImports(
     groups.set(specifier, names)
   }
 
-  const lines: string[] = ["import 'monocon/global'"]
+  const lines: string[] = ["import '@monocon/core/global'"]
   for (const [specifier, names] of groups) {
     lines.push(`import { ${names.join(', ')} } from '${specifier}'`)
   }

@@ -9,4 +9,4 @@ export type HttpMethod =
   | 'TRACE'
   | 'PATCH'
 
-export type EndpointMethod = HttpMethod | 'ALL'
+export type RouteMethod = HttpMethod | 'ALL'

@@ -1,5 +1,5 @@
 {
-  "name": "@monocon/cli",
+  "name": "@monocon/compiler",
   "version": "0.0.3",
   "description": "Codegen CLI for monocon.",
   "license": "MIT",
