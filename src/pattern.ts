@@ -17,11 +17,22 @@ export function matchMiddlewares(
   return middlewares.filter((middleware) => patternMatches(middleware['~pattern'], path))
 }
 
+const globCache = new Map<string, RegExp>()
+
 function globMatches(glob: string, path: string): boolean {
   return globToRegExp(glob).test(path)
 }
 
-function globToRegExp(glob: string): RegExp {
+export function globToRegExp(glob: string): RegExp {
+  const cached = globCache.get(glob)
+  if (cached) return cached
+
+  const compiled = compileGlob(glob)
+  globCache.set(glob, compiled)
+  return compiled
+}
+
+function compileGlob(glob: string): RegExp {
   let source = ''
   let index = 0
 
