@@ -53,6 +53,21 @@ describe('error factory (runtime)', () => {
     expect(thrown.error).toEqual({ reason: 'taken' })
   })
 
+  it('can be constructed with new, behaving like a direct call', () => {
+    const factory = conflictFactory()
+    const called = factory({ reason: 'taken' })
+    const constructed = new factory({ reason: 'taken' }) as unknown as {
+      name: string
+      status: number
+      error: unknown
+    }
+
+    expect(constructed).toBeInstanceOf(Error)
+    expect(constructed.name).toBe(called.name)
+    expect(constructed.status).toBe(called.status)
+    expect(constructed.error).toEqual(called.error)
+  })
+
   it('is detectable as a factory and collects names from registry', () => {
     const factory = defineError({ status: 409, payload: z.object({ reason: z.string() }) })
     expect(isErrorFactory(factory)).toBe(true)

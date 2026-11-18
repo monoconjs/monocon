@@ -14,6 +14,7 @@ export interface RuntimeErrorInstance extends Error {
 
 export interface RuntimeErrorFactory {
   (payload: unknown): RuntimeErrorInstance
+  new (payload: unknown): RuntimeErrorInstance
   readonly '~factory': true
   readonly '~payload': unknown
   readonly '~status': number
@@ -32,7 +33,7 @@ function buildFactory<Payload, Status extends number>(
   errorSchema: unknown,
 ): RuntimeErrorFactory {
   const factory = Object.assign(
-    (payload: unknown): RuntimeErrorInstance => {
+    function (payload: unknown): RuntimeErrorInstance {
       const name = factory['~name'] ?? 'INTERNAL_ERROR'
       return Object.assign(new Error(name), {
         name,
@@ -48,7 +49,7 @@ function buildFactory<Payload, Status extends number>(
       ['~name']: initialName,
       ['~toResponse']: config.toResponse,
     },
-  )
+  ) as unknown as RuntimeErrorFactory
   return factory
 }
 
