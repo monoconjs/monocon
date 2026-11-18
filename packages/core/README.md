@@ -6,4 +6,4 @@ Platform-neutral core runtime for monocon. Exposes a `(Request) => Promise<Respo
 import { createFetchHandler, createMatcher, collectDeclarations } from '@monocon/core'
 ```
 
-For most applications, use `monocon` instead — it re-exports this runtime and provides the `bootstrap()` entry with a Node adapter.
+For most applications, use `monocon` instead — it re-exports this core and provides the platform adapters.
