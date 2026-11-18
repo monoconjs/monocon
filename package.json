@@ -18,7 +18,11 @@
     "type": "git",
     "url": "git+https://github.com/monoconjs/monocon.git"
   },
+  "bin": {
+    "monocon": "./bin/monocon.mjs"
+  },
   "files": [
+    "bin",
     "dist"
   ],
   "type": "module",
