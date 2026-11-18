@@ -1,9 +1,9 @@
 import { z } from 'zod'
 
+import { collectDeclarations, createFetchHandler } from '../packages/core/src/fetch-handler.ts'
 import { createMatcher } from '../packages/core/src/matcher.ts'
 import type { RuntimeMiddleware } from '../packages/core/src/middleware.ts'
 import type { RuntimeRoute } from '../packages/core/src/route.ts'
-import { collectDeclarations, createFetchHandler } from '../src/bootstrap.ts'
 import { get, post } from '../src/index.ts'
 import { middleware } from '../src/index.ts'
 

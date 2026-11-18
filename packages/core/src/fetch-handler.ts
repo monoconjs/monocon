@@ -1,10 +1,13 @@
 import { notFoundRoute } from './_not-found.ts'
-import type { FetchHandler } from './adapter.ts'
 import { assignErrorName, isErrorFactory } from './errors/index.ts'
 import { execute } from './execute.ts'
 import type { Matcher } from './matcher.ts'
 import type { RuntimeMiddleware } from './middleware.ts'
 import type { RuntimeRoute } from './route.ts'
+
+export interface FetchHandler {
+  (request: Request): Promise<Response>
+}
 
 export interface CollectedDeclarations {
   readonly routes: RuntimeRoute[]

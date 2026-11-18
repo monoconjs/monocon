@@ -1,0 +1,68 @@
+{
+  "name": "@monocon/adapter",
+  "version": "0.0.3",
+  "description": "Platform adapters for monocon (Node, Bun, Deno, Cloudflare Workers).",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/node.cjs",
+  "module": "./dist/node.mjs",
+  "types": "./dist/node.d.mts",
+  "exports": {
+    "./node": {
+      "import": {
+        "types": "./dist/node.d.mts",
+        "default": "./dist/node.mjs"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "default": "./dist/node.cjs"
+      }
+    },
+    "./bun": {
+      "import": {
+        "types": "./dist/bun.d.mts",
+        "default": "./dist/bun.mjs"
+      },
+      "require": {
+        "types": "./dist/bun.d.cts",
+        "default": "./dist/bun.cjs"
+      }
+    },
+    "./deno": {
+      "import": {
+        "types": "./dist/deno.d.mts",
+        "default": "./dist/deno.mjs"
+      },
+      "require": {
+        "types": "./dist/deno.d.cts",
+        "default": "./dist/deno.cjs"
+      }
+    },
+    "./workers": {
+      "import": {
+        "types": "./dist/workers.d.mts",
+        "default": "./dist/workers.mjs"
+      },
+      "require": {
+        "types": "./dist/workers.d.cts",
+        "default": "./dist/workers.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@monocon/core": "workspace:*"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

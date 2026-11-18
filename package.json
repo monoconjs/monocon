@@ -32,6 +32,18 @@
       ],
       "config": [
         "./dist/config.d.mts"
+      ],
+      "node": [
+        "./dist/adapters/node.d.mts"
+      ],
+      "bun": [
+        "./dist/adapters/bun.d.mts"
+      ],
+      "deno": [
+        "./dist/adapters/deno.d.mts"
+      ],
+      "workers": [
+        "./dist/adapters/workers.d.mts"
       ]
     }
   },
@@ -65,10 +77,50 @@
         "types": "./dist/config.d.cts",
         "default": "./dist/config.cjs"
       }
+    },
+    "./node": {
+      "import": {
+        "types": "./dist/adapters/node.d.mts",
+        "default": "./dist/adapters/node.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/node.d.cts",
+        "default": "./dist/adapters/node.cjs"
+      }
+    },
+    "./bun": {
+      "import": {
+        "types": "./dist/adapters/bun.d.mts",
+        "default": "./dist/adapters/bun.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/bun.d.cts",
+        "default": "./dist/adapters/bun.cjs"
+      }
+    },
+    "./deno": {
+      "import": {
+        "types": "./dist/adapters/deno.d.mts",
+        "default": "./dist/adapters/deno.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/deno.d.cts",
+        "default": "./dist/adapters/deno.cjs"
+      }
+    },
+    "./workers": {
+      "import": {
+        "types": "./dist/adapters/workers.d.mts",
+        "default": "./dist/adapters/workers.mjs"
+      },
+      "require": {
+        "types": "./dist/adapters/workers.d.cts",
+        "default": "./dist/adapters/workers.cjs"
+      }
     }
   },
   "scripts": {
-    "build": "pnpm --filter @monocon/compiler build && pnpm --filter @monocon/core build && tsdown && pnpm --filter playground build",
+    "build": "pnpm --filter @monocon/compiler build && pnpm --filter @monocon/core build && pnpm --filter @monocon/adapter build && tsdown && pnpm --filter playground build",
     "check:package": "publint && attw --pack .",
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
     "test": "vitest run && pnpm -r test",
@@ -82,6 +134,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@monocon/adapter": "workspace:*",
     "@monocon/compiler": "workspace:*",
     "@monocon/core": "workspace:*",
     "zod": "^4.6.7"
