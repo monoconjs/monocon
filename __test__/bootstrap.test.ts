@@ -5,7 +5,7 @@ import { createMatcher } from '../packages/core/src/matcher.ts'
 import type { RuntimeMiddleware } from '../packages/core/src/middleware.ts'
 import type { RuntimeRoute } from '../packages/core/src/route.ts'
 import { get, post } from '../src/index.ts'
-import { middleware } from '../src/index.ts'
+import { defineMiddleware } from '../src/index.ts'
 
 function asRoute(value: unknown): RuntimeRoute {
   return value as RuntimeRoute
@@ -18,7 +18,7 @@ function asMiddleware(value: unknown): RuntimeMiddleware {
 describe('collectDeclarations', () => {
   it('separates routes from middlewares in a registry namespace', () => {
     const route = asRoute(get('/health').handle(() => ({ ok: true })))
-    const logger = asMiddleware(middleware('*', { onRequest: () => ({ id: 'r1' }) }))
+    const logger = asMiddleware(defineMiddleware({ onRequest: () => ({ id: 'r1' }) }, '*'))
     const registry = { health: route, logger, version: '1.0.0', sum: () => 1 }
 
     const result = collectDeclarations(registry)
@@ -97,7 +97,7 @@ describe('createFetchHandler', () => {
   })
 
   it('applies matched middleware hooks', async () => {
-    const logger = asMiddleware(middleware('*', { onRequest: () => ({ requestId: 'r1' }) }))
+    const logger = asMiddleware(defineMiddleware({ onRequest: () => ({ requestId: 'r1' }) }, '*'))
     let seen: unknown
     const route = asRoute(
       get('/health').handle((ctx) => {
@@ -114,12 +114,15 @@ describe('createFetchHandler', () => {
 
   it('runs global middleware onResponse hooks for an unmatched route', async () => {
     const header = asMiddleware(
-      middleware('*', {
-        onResponse: (_ctx, response) => {
-          response.headers.set('x-trace', 'r1')
-          return response
+      defineMiddleware(
+        {
+          onResponse: (_ctx, response) => {
+            response.headers.set('x-trace', 'r1')
+            return response
+          },
         },
-      }),
+        '*',
+      ),
     )
     const handler = createFetchHandler(createMatcher([]), [header])
 
@@ -132,11 +135,14 @@ describe('createFetchHandler', () => {
   it('runs onRequest hooks for an unmatched route', async () => {
     let seen = false
     const probe = asMiddleware(
-      middleware('*', {
-        onRequest: () => {
-          seen = true
+      defineMiddleware(
+        {
+          onRequest: () => {
+            seen = true
+          },
         },
-      }),
+        '*',
+      ),
     )
     const handler = createFetchHandler(createMatcher([]), [probe])
 

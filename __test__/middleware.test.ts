@@ -19,26 +19,29 @@ function asRuntime(value: object): RuntimeMiddleware {
 
 describe('middleware', () => {
   it('stores a string pattern', () => {
-    const logged = asRuntime(monocon.middleware('/admin/*', {}))
+    const logged = asRuntime(monocon.defineMiddleware({}, '/admin/*'))
 
     expect(logged['~pattern']).toBe('/admin/*')
   })
 
   it('stores an include/exclude pattern', () => {
     const pattern = { include: ['/admin/*'], exclude: ['/admin/public/*'] }
-    const auth = asRuntime(monocon.middleware(pattern, {}))
+    const auth = asRuntime(monocon.defineMiddleware({}, pattern))
 
     expect(auth['~pattern']).toEqual(pattern)
   })
 
   it('stores hooks', () => {
     const mw = asRuntime(
-      monocon.middleware('*', {
-        onRequest,
-        beforeHandle,
-        afterHandle,
-        onResponse,
-      }),
+      monocon.defineMiddleware(
+        {
+          onRequest,
+          beforeHandle,
+          afterHandle,
+          onResponse,
+        },
+        '*',
+      ),
     )
 
     expect(mw['~hooks'].onRequest).toBe(onRequest)

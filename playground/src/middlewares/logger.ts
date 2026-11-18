@@ -1,6 +1,9 @@
-import { middleware } from 'monocon'
+import { defineMiddleware } from 'monocon'
 
-export const logger = middleware('*', {
-  onRequest: () => ({ requestId: 'req-1' }),
-  onResponse: (_ctx, response) => response,
-})
+export const logger = defineMiddleware(
+  {
+    onRequest: () => ({ requestId: 'req-1' }),
+    onResponse: (_ctx, response) => response,
+  },
+  '*',
+)

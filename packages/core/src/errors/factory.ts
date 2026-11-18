@@ -53,7 +53,7 @@ function buildFactory<Payload, Status extends number>(
 }
 
 /** Define an error factory that tags errors with a name, status, and schema-validated payload. */
-export function error<ErrorSchema extends Schema, Status extends number>(
+export function defineError<ErrorSchema extends Schema, Status extends number>(
   options: ErrorOptions<ErrorSchema, Status>,
 ): ErrorFactory<InferOutput<ErrorSchema>, Status> {
   const factory = buildFactory(options, options.name, options.payload)
@@ -78,6 +78,6 @@ export function isErrorFactory(value: unknown): value is RuntimeErrorFactory {
 }
 
 export function assignErrorName(factory: RuntimeErrorFactory, name: string): void {
-  // An explicit `name` passed to error() takes precedence over the registry export name.
+  // An explicit `name` passed to defineError() takes precedence over the registry export name.
   if (factory['~name'] === undefined) factory['~name'] = name
 }

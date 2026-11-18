@@ -14,10 +14,10 @@ async function entry(text: string): Promise<string> {
 }
 
 describe('analyze error declarations', () => {
-  it('collects exported error() factories', async () => {
-    const file = await entry(`import { error } from 'monocon'
-export const Conflict = error({ status: 409, error: {} })
-export const Gone = error({ status: 410, error: {} })
+  it('collects exported defineError() factories', async () => {
+    const file = await entry(`import { defineError } from 'monocon'
+export const Conflict = defineError({ status: 409, error: {} })
+export const Gone = defineError({ status: 410, error: {} })
 `)
     const result = await analyzeEntries([file])
 
@@ -28,8 +28,8 @@ export const Gone = error({ status: 410, error: {} })
   })
 
   it('reads an explicit name property', async () => {
-    const file = await entry(`import { error } from 'monocon'
-export const Conflict = error({ name: 'CONFLICT', status: 409, error: {} })
+    const file = await entry(`import { defineError } from 'monocon'
+export const Conflict = defineError({ name: 'CONFLICT', status: 409, error: {} })
 `)
     const result = await analyzeEntries([file])
 
@@ -38,10 +38,10 @@ export const Conflict = error({ name: 'CONFLICT', status: 409, error: {} })
     ])
   })
 
-  it('ignores error() calls that are not exported', async () => {
-    const file = await entry(`import { error } from 'monocon'
-const internal = error({ status: 500, error: {} })
-export const Public = error({ status: 400, error: {} })
+  it('ignores defineError() calls that are not exported', async () => {
+    const file = await entry(`import { defineError } from 'monocon'
+const internal = defineError({ status: 500, error: {} })
+export const Public = defineError({ status: 400, error: {} })
 `)
     const result = await analyzeEntries([file])
 
