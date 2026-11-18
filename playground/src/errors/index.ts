@@ -1,7 +1,7 @@
-import { error } from 'monocon'
+import { defineError } from 'monocon'
 import { z } from 'zod'
 
-export const CustomError = error({
+export const CustomError = defineError({
   name: 'CUSTOM_ERROR',
   status: 500,
   payload: z.object({ path: z.string() }),

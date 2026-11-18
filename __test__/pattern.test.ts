@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { middleware } from '../packages/core/src/middleware.ts'
+import { defineMiddleware } from '../packages/core/src/middleware.ts'
 import { globToRegExp, matchMiddlewares, patternMatches } from '../packages/core/src/pattern.ts'
 
 describe('pattern matching', () => {
@@ -25,8 +25,8 @@ describe('pattern matching', () => {
   })
 
   it('filters and preserves middleware order', () => {
-    const logger = middleware('*', {})
-    const auth = middleware({ include: ['/admin/*'], exclude: [] }, {})
+    const logger = defineMiddleware({}, '*')
+    const auth = defineMiddleware({}, { include: ['/admin/*'], exclude: [] })
 
     expect(matchMiddlewares([logger, auth], '/admin/users')).toEqual([logger, auth])
     expect(matchMiddlewares([logger, auth], '/health')).toEqual([logger])

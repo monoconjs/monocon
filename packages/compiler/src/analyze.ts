@@ -86,7 +86,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
       const factory = findFactoryCall(initializer)
       if (!factory) continue
 
-      if (factory.name === 'middleware') {
+      if (factory.name === 'defineMiddleware') {
         const pattern = readPattern(factory.call, file, warnings)
         if (!pattern) continue
 
@@ -99,7 +99,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
         continue
       }
 
-      if (factory.name === 'error') {
+      if (factory.name === 'defineError') {
         declarations.push({
           kind: 'error',
           file,
@@ -146,7 +146,7 @@ function findFactoryCall(expression: ts.Expression): FactoryCall | undefined {
 }
 
 function isFactoryName(name: string): boolean {
-  return name === 'middleware' || name === 'error' || ROUTE_FACTORIES.has(name)
+  return name === 'defineMiddleware' || name === 'defineError' || ROUTE_FACTORIES.has(name)
 }
 
 function readPath(call: ts.CallExpression, file: string, warnings: string[]): string | undefined {
@@ -181,7 +181,8 @@ function readPattern(
   file: string,
   warnings: string[],
 ): Pattern | undefined {
-  const [argument] = call.arguments
+  // defineMiddleware(hooks, pattern) — the pattern is the second argument.
+  const argument = call.arguments[1]
 
   if (argument && ts.isStringLiteral(argument)) {
     return { kind: 'glob', value: argument.text }

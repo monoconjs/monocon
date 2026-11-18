@@ -1,14 +1,14 @@
-import { middleware } from '../src/index.ts'
+import { defineMiddleware } from '../src/index.ts'
 
 describe('middleware types', () => {
   it('keeps the pattern literal type', () => {
-    const auth = middleware('/admin/*', { onRequest: () => ({ userId: 'u1' }) })
+    const auth = defineMiddleware({ onRequest: () => ({ userId: 'u1' }) }, '/admin/*')
 
     expectTypeOf(auth['~pattern']).toEqualTypeOf<'/admin/*'>()
   })
 
   it('keeps the include/exclude pattern shape', () => {
-    const auth = middleware({ include: ['/admin/*'], exclude: ['/admin/public/*'] }, {})
+    const auth = defineMiddleware({}, { include: ['/admin/*'], exclude: ['/admin/public/*'] })
 
     expectTypeOf(auth['~pattern']).toEqualTypeOf<{
       readonly include: readonly ['/admin/*']
@@ -17,10 +17,13 @@ describe('middleware types', () => {
   })
 
   it('derives provided from hooks', () => {
-    const auth = middleware('/admin/*', {
-      onRequest: () => ({ userId: 'u1' }),
-      beforeHandle: () => ({ role: 'admin' }),
-    })
+    const auth = defineMiddleware(
+      {
+        onRequest: () => ({ userId: 'u1' }),
+        beforeHandle: () => ({ role: 'admin' }),
+      },
+      '/admin/*',
+    )
 
     expectTypeOf(auth['~provided']).toEqualTypeOf<{
       userId: string
@@ -29,7 +32,7 @@ describe('middleware types', () => {
   })
 
   it('leaves provided empty when hooks return nothing', () => {
-    const logger = middleware('*', { onRequest: () => ({}) })
+    const logger = defineMiddleware({ onRequest: () => ({}) }, '*')
 
     expectTypeOf(logger['~provided']).toEqualTypeOf<{}>()
   })

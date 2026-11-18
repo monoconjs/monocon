@@ -4,7 +4,7 @@ import { execute } from '../packages/core/src/execute.ts'
 import type { RuntimeMiddleware } from '../packages/core/src/middleware.ts'
 import type { RuntimeRoute } from '../packages/core/src/route.ts'
 import { get } from '../src/index.ts'
-import { middleware } from '../src/index.ts'
+import { defineMiddleware } from '../src/index.ts'
 
 function asRoute(value: unknown): RuntimeRoute {
   return value as RuntimeRoute
@@ -114,24 +114,30 @@ describe('execute', () => {
     const calls: string[] = []
     let handlerCtx: unknown
     const logger = asMiddleware(
-      middleware('*', {
-        onRequest: () => {
-          calls.push('mw.onRequest')
-          return { requestId: 'r1' }
+      defineMiddleware(
+        {
+          onRequest: () => {
+            calls.push('mw.onRequest')
+            return { requestId: 'r1' }
+          },
+          onResponse: (_ctx, response) => {
+            calls.push('mw.onResponse')
+            return response
+          },
         },
-        onResponse: (_ctx, response) => {
-          calls.push('mw.onResponse')
-          return response
-        },
-      }),
+        '*',
+      ),
     )
     const auth = asMiddleware(
-      middleware('/admin/*', {
-        beforeHandle: () => {
-          calls.push('auth.beforeHandle')
-          return { user: 'alice' }
+      defineMiddleware(
+        {
+          beforeHandle: () => {
+            calls.push('auth.beforeHandle')
+            return { user: 'alice' }
+          },
         },
-      }),
+        '/admin/*',
+      ),
     )
     const route = asRoute(
       get('/admin/users').handle((ctx) => {

@@ -90,18 +90,21 @@ A middleware matches routes by path pattern and contributes typed context to the
 
 ```ts
 // src/middlewares/logger.ts
-import { middleware } from 'monocon'
+import { defineMiddleware } from 'monocon'
 
-export const logger = middleware('*', {
-  onRequest: () => ({ requestId: 'req-1' }),
-})
+export const logger = defineMiddleware(
+  {
+    onRequest: () => ({ requestId: 'req-1' }),
+  },
+  '*',
+)
 
 // src/middlewares/auth.ts
-export const auth = middleware(
-  { include: ['/admin/*'], exclude: ['/admin/public/*'] },
+export const auth = defineMiddleware(
   {
     onRequest: () => ({ user: 'alice', role: 'admin' as const }),
   },
+  { include: ['/admin/*'], exclude: ['/admin/public/*'] },
 )
 ```
 

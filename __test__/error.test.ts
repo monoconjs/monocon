@@ -13,9 +13,9 @@ import {
   NoHandlerError,
   ParseError,
   ValidationError,
-  error,
+  defineError,
+  defineMiddleware,
   get,
-  middleware,
   onError,
 } from '../src/index.ts'
 
@@ -28,7 +28,7 @@ function request(path: string): Request {
 }
 
 function conflictFactory() {
-  const factory = error({
+  const factory = defineError({
     status: 409,
     payload: z.object({ reason: z.string() }),
     toResponse: (body) => Response.json(body, { status: 409 }),
@@ -54,7 +54,7 @@ describe('error factory (runtime)', () => {
   })
 
   it('is detectable as a factory and collects names from registry', () => {
-    const factory = error({ status: 409, payload: z.object({ reason: z.string() }) })
+    const factory = defineError({ status: 409, payload: z.object({ reason: z.string() }) })
     expect(isErrorFactory(factory)).toBe(true)
 
     const route = asRoute(get('/x').handle(() => ({ ok: true })))
@@ -64,7 +64,7 @@ describe('error factory (runtime)', () => {
   })
 
   it('explicit name takes precedence over the registry export name', () => {
-    const factory = error({
+    const factory = defineError({
       name: 'CONFLICT',
       status: 409,
       payload: z.object({ reason: z.string() }),
@@ -94,9 +94,12 @@ describe('onError handlers (runtime)', () => {
   })
 
   it('middleware onError sees errors from the route', async () => {
-    const mw = middleware('*', {
-      onError: (ctx) => Response.json({ from: 'mw', name: ctx.name }, { status: 409 }),
-    })
+    const mw = defineMiddleware(
+      {
+        onError: (ctx) => Response.json({ from: 'mw', name: ctx.name }, { status: 409 }),
+      },
+      '*',
+    )
     const route = asRoute(
       get('/boom').handle(() => {
         throw createError('INTERNAL_ERROR', 500, 'boom')

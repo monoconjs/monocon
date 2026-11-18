@@ -1,6 +1,6 @@
 export { all, del, del as delete, get, head, options, patch, post, put } from './route.ts'
-export { middleware } from './middleware.ts'
-export { error } from './errors/factory.ts'
+export { defineMiddleware } from './middleware.ts'
+export { defineError } from './errors/factory.ts'
 export { NoHandlerError, ParseError, ValidationError } from './errors/builtin.ts'
 export { onError } from './errors/handler.ts'
 export { clearErrorHandlers, handleError } from './errors/handler.ts'
