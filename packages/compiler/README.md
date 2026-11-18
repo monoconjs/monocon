@@ -2,7 +2,7 @@
 
 The code generation CLI for [monocon](https://www.npmjs.com/package/monocon). It scans your route and middleware declarations, generates type declarations that map middleware context onto matched routes, and compiles sources for bundlers.
 
-This package is bundled as a dependency of `monocon`, so installing `monocon` gives you the `monocon` command. You can also install it directly if you only need the tooling.
+This package is bundled as a dependency of `monocon` and powers its `monocon` command. Installing `monocon` gives you the command; you can also install this package directly if you only need the tooling.
 
 ## Install
 

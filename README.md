@@ -142,7 +142,7 @@ export default defineConfig({
 
 ## CLI
 
-The `monocon` command is provided by the bundled `@monocon/compiler` dependency.
+The `monocon` command is provided by the `monocon` package, powered by the bundled `@monocon/compiler`.
 
 ```sh
 monocon gen [command...]   # generate .monocon declarations, then optionally run a command
