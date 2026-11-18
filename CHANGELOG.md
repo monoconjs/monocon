@@ -4,6 +4,15 @@ All notable changes to `monocon` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Split the project into four packages: `@monocon/core` (platform-neutral runtime), `@monocon/compiler` (codegen CLI), `@monocon/adapter` (platform adapters), and `monocon` (umbrella re-export).
+- Replace `bootstrap()` with per-platform `start()` functions exported from `monocon/node`, `monocon/bun`, `monocon/deno`, and `monocon/workers`. Bun, Deno and Workers adapters are currently placeholders.
+- Rename all `endpoint` terminology to `route` in the public API and generated types.
+- Point generated global augmentation at `@monocon/core/global`.
+
 ## [0.0.3] - 2026-11-17
 
 ### Added

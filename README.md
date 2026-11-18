@@ -14,7 +14,7 @@ Requires Node.js 22 or later.
 
 ## Quick start
 
-Define a route and export it. Then start the server with `bootstrap()`.
+Define a route and export it. Then start the server with `start()` from a platform adapter.
 
 ```ts
 // src/routes/users.ts
@@ -29,7 +29,7 @@ export const getUser = get('/users/:id', {
 
 ```ts
 // src/configuration.ts
-import type { ServerConfig } from 'monocon'
+import type { ServerConfig } from 'monocon/node'
 
 export default {
   port: 3000,
@@ -38,9 +38,9 @@ export default {
 
 ```ts
 // src/index.ts
-import { bootstrap } from 'monocon'
+import { start } from 'monocon/node'
 
-const server = await bootstrap()
+const server = await start()
 console.log(`listening on http://localhost:${server.config.port}`)
 ```
 
@@ -50,7 +50,7 @@ Generate the registry, then run your app:
 npx monocon gen tsx src/index.ts
 ```
 
-`bootstrap()` loads `configuration.ts` from the working directory (or its `src/` directory), discovers the generated registry at `.monocon/registry.mjs`, and starts an HTTP server. If no config file is found, it defaults to port `3000`.
+The adapter's `start()` loads `configuration.ts` from the working directory (or its `src/` directory), discovers the generated registry at `.monocon/registry.mjs`, and starts an HTTP server. If no config file is found, it defaults to port `3000`.
 
 ## Routes
 
@@ -111,10 +111,10 @@ Monocon generates a declaration (`.monocon/types.d.ts`) that maps each matched m
 
 ### Startup configuration
 
-`configuration.ts` (or any of `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`) holds runtime options and is loaded automatically by `bootstrap()` from the working directory or `src/`.
+`configuration.ts` (or any of `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`) holds runtime options and is loaded automatically by the adapter's `start()` from the working directory or `src/`.
 
 ```ts
-import type { ServerConfig } from 'monocon'
+import type { ServerConfig } from 'monocon/node'
 
 export default {
   port: 3000,
@@ -147,9 +147,17 @@ monocon gen --watch [command...]  # regenerate on changes and restart the comman
 monocon build              # compile sources to .monocon-dist for bundlers
 ```
 
+## Packages
+
+- `monocon` — umbrella package; re-exports the runtime API (`get`, `post`, `middleware`, types).
+- `@monocon/core` — platform-neutral core runtime with no `node:` dependencies.
+- `@monocon/compiler` — code generation CLI (the `monocon` command).
+- `@monocon/adapter` — platform adapters, exposed as `./node`, `./bun`, `./deno`, `./workers`.
+
 ## Exports
 
-- `monocon` — runtime API (`get`, `post`, `middleware`, `bootstrap`, types).
+- `monocon` — runtime API (`get`, `post`, `middleware`, types).
+- `monocon/node`, `monocon/bun`, `monocon/deno`, `monocon/workers` — `start()` for each platform.
 - `monocon/global` — global type augmentations for middleware-derived context.
 - `monocon/config` — `defineConfig` for CLI configuration.
 

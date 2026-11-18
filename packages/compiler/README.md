@@ -25,7 +25,7 @@ monocon build              # compile sources to .monocon-dist for bundlers
 Scans the entry files configured in `monocon.config.ts` and writes to `.monocon/`:
 
 - `types.d.ts` — module augmentation that maps matched middleware to each route path, so handler contexts are typed with the values your middleware provides.
-- `registry.mjs` / `registry.d.mts` — a barrel re-exporting all declarations, consumed by `bootstrap()` at runtime.
+- `registry.mjs` / `registry.d.mts` — a barrel re-exporting all declarations, consumed by the adapter's `start()` at runtime.
 
 If a command is appended, it runs after generation.
 
@@ -41,7 +41,7 @@ Press Ctrl+C to stop the watcher and the command together. Since monocon already
 
 ### `monocon build`
 
-Runs generation, then compiles the entry files to `.monocon-dist/`, injecting the generated registry import into `bootstrap()` calls. The result is consumed by a bundler (for example `tsdown` with `entry: './.monocon-dist/index.js'`).
+Runs generation, then compiles the entry files to `.monocon-dist/`, injecting the generated registry import into `start()` calls (from any platform adapter). The result is consumed by a bundler (for example `tsdown` with `entry: './.monocon-dist/index.js'`).
 
 ## Configuration
 

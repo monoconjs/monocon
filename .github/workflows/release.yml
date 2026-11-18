@@ -25,13 +25,13 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Check the tag matches both package versions
+      - name: Check the tag matches all package versions
         run: |
           tag="${GITHUB_REF_NAME#v}"
-          monocon_version="$(node -p "require('./package.json').version")"
-          cli_version="$(node -p "require('./cli/package.json').version")"
-          if [ "$tag" != "$monocon_version" ] || [ "$tag" != "$cli_version" ]; then
-            echo "tag $GITHUB_REF_NAME does not match package versions: monocon $monocon_version, @monocon/cli $cli_version" >&2
+          versions="$(node -e "for (const p of ['./package.json','./packages/core/package.json','./packages/compiler/package.json','./packages/adapter/package.json']) { console.log(p, require(p).version) }")"
+          echo "$versions"
+          if echo "$versions" | awk '{print $2}' | grep -qv "^$tag$"; then
+            echo "tag $GITHUB_REF_NAME does not match all package versions" >&2
             exit 1
           fi
 
@@ -41,15 +41,17 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm check:package
-      - run: pnpm exec attw --pack cli --profile esm-only
+      - run: pnpm exec attw --pack packages/core --profile esm-only
+      - run: pnpm exec attw --pack packages/compiler --profile esm-only
+      - run: pnpm exec attw --pack packages/adapter --profile esm-only
 
-      - name: Publish monocon
-        run: pnpm publish --access public --provenance --no-git-checks
+      - name: Publish core, compiler and adapter
+        run: pnpm --filter "@monocon/*" publish --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @monocon/cli
-        run: pnpm --filter @monocon/cli publish --access public --provenance --no-git-checks
+      - name: Publish monocon
+        run: pnpm publish --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
