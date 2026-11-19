@@ -4,6 +4,20 @@ All notable changes to `monocon` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-11-19
+
+### Added
+
+- Allow `defineError()` with no arguments and accept a plain TypeScript type as its payload generic, so defining a validation schema is optional.
+
+### Changed
+
+- Make the error factory callable without a payload when the payload type has no required keys.
+
+### Fixed
+
+- Point generated global augmentation and its import at the public `monocon/global` subpath instead of the internal `@monocon/core/global`.
+
 ## [0.1.1] - 2026-11-18
 
 ### Added
@@ -59,6 +73,7 @@ Skipped to keep the version number in sync with `@monocon/compiler`.
 - Route matching, request execution, and `bootstrap()` server startup.
 - Code generation CLI with `.monocon` type declarations and `monocon build` for bundler output.
 
+[0.2.0]: https://github.com/monoconjs/monocon/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/monoconjs/monocon/compare/v0.1.0...v0.1.1
 [0.0.3]: https://github.com/monoconjs/monocon/compare/v0.0.1...v0.0.3
 [0.0.1]: https://github.com/monoconjs/monocon/releases/tag/v0.0.1
