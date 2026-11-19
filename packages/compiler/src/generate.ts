@@ -80,7 +80,7 @@ function renderTypes(
     '',
     ...imports,
     '',
-    "declare module '@monocon/core/global' {",
+    "declare module 'monocon/global' {",
     '  interface RouteMiddlewareContext {',
   ]
 
@@ -123,7 +123,7 @@ function collectImports(
     groups.set(specifier, names)
   }
 
-  const lines: string[] = ["import '@monocon/core/global'"]
+  const lines: string[] = ["import 'monocon/global'"]
   for (const [specifier, names] of groups) {
     lines.push(`import { ${names.join(', ')} } from '${specifier}'`)
   }
