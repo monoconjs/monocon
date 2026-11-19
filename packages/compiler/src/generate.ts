@@ -136,7 +136,7 @@ function collectRouteImports(outputDir: string, routes: RouteDecl[]): RouteImpor
       aliases.set(route.file, alias)
       lines.push(`import * as ${alias} from '${importSpecifier(outputDir, route.file)}'`)
     }
-    refs.set(route, `${alias}.${route.exportName}`)
+    refs.set(route, `${alias}.${route.default ? 'default' : route.exportName}`)
   }
 
   return { lines, ref: (route) => refs.get(route) ?? route.exportName }
@@ -175,7 +175,8 @@ function collectImports(
   for (const item of [...middlewares, ...errors]) {
     const specifier = importSpecifier(outputDir, item.file)
     const names = groups.get(specifier) ?? []
-    if (!names.includes(item.exportName)) names.push(item.exportName)
+    const importName = item.default ? `default as ${item.exportName}` : item.exportName
+    if (!names.includes(importName)) names.push(importName)
     groups.set(specifier, names)
   }
 
@@ -201,6 +202,14 @@ function renderRegistry(outputDir: string, declarations: Declaration[]): string 
     lines.push(`export * from '${importSpecifier(outputDir, file)}'`)
   }
 
+  for (const declaration of declarations) {
+    if (declaration.default) {
+      lines.push(
+        `export { default as ${declaration.exportName} } from '${importSpecifier(outputDir, declaration.file)}'`,
+      )
+    }
+  }
+
   lines.push('')
   return lines.join('\n')
 }
@@ -218,6 +227,14 @@ function renderRegistryTypes(outputDir: string, declarations: Declaration[]): st
 
   for (const file of files) {
     lines.push(`export * from '${importSpecifier(outputDir, file)}'`)
+  }
+
+  for (const declaration of declarations) {
+    if (declaration.default) {
+      lines.push(
+        `export { default as ${declaration.exportName} } from '${importSpecifier(outputDir, declaration.file)}'`,
+      )
+    }
   }
 
   lines.push('')
