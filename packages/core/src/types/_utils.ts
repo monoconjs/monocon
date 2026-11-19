@@ -21,3 +21,11 @@ export type ProvidedOfHook<Fn> = Fn extends (...args: any[]) => infer Result
         : {}
     : {}
   : {}
+
+export type HasRequiredKey<T> = keyof T extends never
+  ? false
+  : {
+        [K in keyof T]-?: {} extends Pick<T, K> ? never : K
+      }[keyof T] extends never
+    ? false
+    : true

@@ -1,16 +1,27 @@
 import type { ErrorMap, ErrorStatusMap } from '../global.ts'
-import type { MaybePromise } from './_utils.ts'
+import type { HasRequiredKey, MaybePromise } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 import type { InferOutput, Schema } from './schema.ts'
 
 export type ErrorCode = Extract<keyof ErrorMap, string>
 
-export interface ErrorFactory<Payload, Status extends number = number> {
-  (payload: Payload): ErrorInstance<Payload, Status>
-  new (payload: Payload): ErrorInstance<Payload, Status>
+export type ErrorFactory<Payload, Status extends number = number> = {
   readonly '~payload': Payload
   readonly '~status': Status
-}
+} & ([Payload] extends [never]
+  ? {
+      (): ErrorInstance<Payload, Status>
+      new (): ErrorInstance<Payload, Status>
+    }
+  : HasRequiredKey<Payload> extends true
+    ? {
+        (payload: Payload): ErrorInstance<Payload, Status>
+        new (payload: Payload): ErrorInstance<Payload, Status>
+      }
+    : {
+        (payload?: Payload): ErrorInstance<Payload, Status>
+        new (payload?: Payload): ErrorInstance<Payload, Status>
+      })
 
 export interface ErrorInstance<Payload, Status extends number> extends Error {
   readonly name: ErrorCode
@@ -18,11 +29,13 @@ export interface ErrorInstance<Payload, Status extends number> extends Error {
   readonly error: Payload
 }
 
-export interface ErrorOptions<Error extends Schema, Status extends number> {
+export type ErrorPayload<T> = T extends Schema ? InferOutput<T> : T
+
+export interface ErrorOptions<T = unknown, Status extends number = number> {
   readonly name?: string
-  readonly status: Status
-  readonly payload: Error
-  readonly toResponse?: (payload: InferOutput<Error>) => Response
+  readonly status?: Status
+  readonly payload?: T
+  readonly toResponse?: (payload: ErrorPayload<T>) => Response
 }
 
 export type PayloadOf<Code extends ErrorCode> = ErrorMap[Code]
