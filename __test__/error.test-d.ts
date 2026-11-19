@@ -23,6 +23,33 @@ describe('error types', () => {
     expectTypeOf(called.status).toEqualTypeOf<409>()
   })
 
+  it('all options are optional', () => {
+    const bare = defineError()
+    expectTypeOf(bare['~status']).toEqualTypeOf<500>()
+    expectTypeOf(bare['~payload']).toEqualTypeOf<never>()
+    expectTypeOf(bare().status).toEqualTypeOf<500>()
+
+    const empty = defineError({})
+    expectTypeOf(empty['~status']).toEqualTypeOf<500>()
+
+    const named = defineError({ name: 'CONFLICT' })
+    expectTypeOf(named['~status']).toEqualTypeOf<500>()
+  })
+
+  it('accepts a plain TypeScript type as the payload generic', () => {
+    const factory = defineError<{ id: string }>()
+    expectTypeOf(factory['~payload']).toEqualTypeOf<{ id: string }>()
+    expectTypeOf(factory({ id: 'x' }).error).toEqualTypeOf<{ id: string }>()
+
+    const withStatus = defineError<{ id: string }, 404>({ status: 404 })
+    expectTypeOf(withStatus({ id: 'x' }).status).toEqualTypeOf<404>()
+  })
+
+  it('makes payload optional when the type has no required keys', () => {
+    const factory = defineError<{ id?: string }>()
+    expectTypeOf(factory()).toEqualTypeOf(factory({ id: 'x' }))
+  })
+
   it('name is a literal union from the error map', () => {
     expectTypeOf<ErrorCode>().toEqualTypeOf<
       | 'VALIDATION_ERROR'

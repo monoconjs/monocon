@@ -53,6 +53,29 @@ describe('error factory (runtime)', () => {
     expect(thrown.error).toEqual({ reason: 'taken' })
   })
 
+  it('uses defaults when no options are given', () => {
+    const factory = defineError()
+    const thrown = factory() as unknown as {
+      name: string
+      status: number
+      error: unknown
+    }
+
+    expect(thrown.status).toBe(500)
+    expect(thrown.error).toBeUndefined()
+    expect(thrown.name).toBe('INTERNAL_ERROR')
+  })
+
+  it('accepts a plain type generic without a schema', () => {
+    const factory = defineError<{ id: string }, 404>({ status: 404 })
+    const thrown = factory({ id: 'x' }) as unknown as { status: number; error: unknown }
+    expect(thrown.status).toBe(404)
+    expect(thrown.error).toEqual({ id: 'x' })
+
+    const bare = defineError()().error
+    expect(bare).toBeUndefined()
+  })
+
   it('can be constructed with new, behaving like a direct call', () => {
     const factory = conflictFactory()
     const called = factory({ reason: 'taken' })

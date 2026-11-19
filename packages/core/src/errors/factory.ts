@@ -1,7 +1,6 @@
 // oxlint-disable no-shadow
 // oxlint-disable typescript/no-unsafe-type-assertion
-import type { ErrorFactory, ErrorOptions } from '../types/error.ts'
-import type { InferOutput, Schema } from '../types/schema.ts'
+import type { ErrorFactory, ErrorOptions, ErrorPayload } from '../types/error.ts'
 
 export type ErrorHook = (ctx: any) => Promise<Response | void> | Response | void
 
@@ -54,11 +53,18 @@ function buildFactory<Payload, Status extends number>(
 }
 
 /** Define an error factory that tags errors with a name, status, and schema-validated payload. */
-export function defineError<ErrorSchema extends Schema, Status extends number>(
-  options: ErrorOptions<ErrorSchema, Status>,
-): ErrorFactory<InferOutput<ErrorSchema>, Status> {
-  const factory = buildFactory(options, options.name, options.payload)
-  return factory as unknown as ErrorFactory<InferOutput<ErrorSchema>, Status>
+export function defineError<T = never, Status extends number = 500>(
+  options: ErrorOptions<T, Status> = {},
+): ErrorFactory<ErrorPayload<T>, Status> {
+  const factory = buildFactory(
+    {
+      status: (options.status ?? 500) as Status,
+      toResponse: options.toResponse,
+    },
+    options.name,
+    options.payload,
+  )
+  return factory as unknown as ErrorFactory<ErrorPayload<T>, Status>
 }
 
 /** Define a builtin error with a fixed name and a framework-provided toResponse. */
