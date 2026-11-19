@@ -55,15 +55,16 @@ function renderTypes(
   middlewares: MiddlewareDecl[],
   errors: ErrorDecl[],
 ): string {
-  const rows: Array<{ path: string; matched: MiddlewareDecl[] }> = []
-  const seenPaths = new Set<string>()
+  const rows: Array<{ method: string; path: string; matched: MiddlewareDecl[] }> = []
+  const seenKeys = new Set<string>()
 
   for (const route of routes) {
-    if (seenPaths.has(route.path)) continue
-    seenPaths.add(route.path)
+    const key = `${route.method} ${route.path}`
+    if (seenKeys.has(key)) continue
+    seenKeys.add(key)
 
-    const matched = matchMiddlewares(middlewares, route.path)
-    if (matched.length > 0) rows.push({ path: route.path, matched })
+    const matched = matchMiddlewares(middlewares, route.path, route.method)
+    if (matched.length > 0) rows.push({ method: route.method, path: route.path, matched })
   }
 
   const imports = collectImports(
@@ -93,7 +94,7 @@ function renderTypes(
     const provided = row.matched
       .map((middleware) => `(typeof ${middleware.exportName})['~provided']`)
       .join(' & ')
-    lines.push(`    ${JSON.stringify(row.path)}: ${provided}`)
+    lines.push(`    ${JSON.stringify(`${row.method} ${row.path}`)}: ${provided}`)
   }
 
   lines.push('  }')

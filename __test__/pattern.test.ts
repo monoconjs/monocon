@@ -31,6 +31,37 @@ describe('pattern matching', () => {
     expect(matchMiddlewares([logger, auth], '/admin/users')).toEqual([logger, auth])
     expect(matchMiddlewares([logger, auth], '/health')).toEqual([logger])
   })
+
+  it('matches a method prefix exactly', () => {
+    expect(patternMatches('GET /users/*', '/users/1', 'GET')).toBe(true)
+    expect(patternMatches('GET /users/*', '/users/1', 'POST')).toBe(false)
+    expect(patternMatches('/users/*', '/users/1', 'POST')).toBe(true)
+    expect(patternMatches('ALL /users/*', '/users/1', 'POST')).toBe(true)
+  })
+
+  it('treats an ALL route as matching a method-prefixed pattern', () => {
+    expect(patternMatches('GET /users/*', '/users/1', 'ALL')).toBe(true)
+  })
+
+  it('ignores the method constraint when no method is supplied', () => {
+    expect(patternMatches('GET /users/*', '/users/1')).toBe(true)
+  })
+
+  it('supports method prefixes inside include and exclude rules', () => {
+    const pattern = { include: ['GET /admin/*'], exclude: ['GET /admin/public/*'] }
+
+    expect(patternMatches(pattern, '/admin/users', 'GET')).toBe(true)
+    expect(patternMatches(pattern, '/admin/users', 'POST')).toBe(false)
+    expect(patternMatches(pattern, '/admin/public/x', 'GET')).toBe(false)
+  })
+
+  it('filters middlewares by method', () => {
+    const any = defineMiddleware({}, '*')
+    const getOnly = defineMiddleware({}, 'GET /admin/*')
+
+    expect(matchMiddlewares([any, getOnly], '/admin/users', 'GET')).toEqual([any, getOnly])
+    expect(matchMiddlewares([any, getOnly], '/admin/users', 'POST')).toEqual([any])
+  })
 })
 
 describe('globToRegExp', () => {

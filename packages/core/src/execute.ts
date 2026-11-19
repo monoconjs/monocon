@@ -26,7 +26,7 @@ export async function execute(
 ): Promise<Response> {
   const url = new URL(request.url)
   const optionsOf = route['~options']
-  const middlewares = matchMiddlewares(options.middlewares ?? [], route['~path'])
+  const middlewares = matchMiddlewares(options.middlewares ?? [], route['~path'], route['~method'])
 
   let stage: ErrorStage = 'validation'
   let ctx: RuntimeContext | undefined
