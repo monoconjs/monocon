@@ -2,6 +2,8 @@ import type { StandardSchemaIssue } from './types/schema.ts'
 
 export interface RouteMiddlewareContext {}
 
+export interface RouteRecords {}
+
 // ErrorMap maps name -> error type (generated entries use `(typeof X)['~payload']`).
 export interface ErrorMap {
   VALIDATION_ERROR: readonly StandardSchemaIssue[]
