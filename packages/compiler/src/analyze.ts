@@ -37,6 +37,7 @@ export interface RouteDecl {
   readonly exportName: string
   readonly method: string
   readonly path: string
+  readonly default?: true
 }
 
 export interface MiddlewareDecl {
@@ -44,6 +45,7 @@ export interface MiddlewareDecl {
   readonly file: string
   readonly exportName: string
   readonly pattern: Pattern
+  readonly default?: true
 }
 
 export interface ErrorDecl {
@@ -51,6 +53,7 @@ export interface ErrorDecl {
   readonly file: string
   readonly exportName: string
   readonly name: string | undefined
+  readonly default?: true
 }
 
 export type Declaration = RouteDecl | MiddlewareDecl | ErrorDecl
@@ -63,6 +66,8 @@ export interface AnalyzeResult {
 export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResult> {
   const warnings: string[] = []
   const declarations: Declaration[] = []
+  let defaultIndex = 0
+  const nextDefaultName = (): string => `__default_${defaultIndex++}`
 
   const sources = await Promise.all(
     entryFiles.map(async (file) => ({
@@ -76,8 +81,11 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
   for (const { file, text } of sources) {
     const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
 
-    const bindings = collectExports(source)
+    const bindings = collectExports(source, nextDefaultName)
     const initializers = collectInitializers(source)
+    for (const binding of bindings) {
+      if (binding.inlineInitializer) initializers.set(binding.localName, binding.inlineInitializer)
+    }
 
     for (const binding of bindings) {
       const initializer = initializers.get(binding.localName)
@@ -85,6 +93,8 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
 
       const factory = findFactoryCall(initializer)
       if (!factory) continue
+
+      const defaultFlag = binding.isDefault ? { default: true as const } : {}
 
       if (factory.name === 'defineMiddleware') {
         const pattern = readPattern(factory.call, file, warnings)
@@ -95,6 +105,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
           file,
           exportName: binding.exportName,
           pattern,
+          ...defaultFlag,
         })
         continue
       }
@@ -105,6 +116,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
           file,
           exportName: binding.exportName,
           name: readErrorName(factory.call, file, warnings),
+          ...defaultFlag,
         })
         continue
       }
@@ -118,6 +130,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
           exportName: binding.exportName,
           method: METHOD_NAMES[factory.name] ?? factory.name.toUpperCase(),
           path,
+          ...defaultFlag,
         })
       }
     }
@@ -232,9 +245,11 @@ function propertyName(name: ts.PropertyName): string | undefined {
 interface ExportBinding {
   readonly localName: string
   readonly exportName: string
+  readonly isDefault?: boolean
+  readonly inlineInitializer?: ts.Expression
 }
 
-function collectExports(source: ts.SourceFile): ExportBinding[] {
+function collectExports(source: ts.SourceFile, nextDefaultName: () => string): ExportBinding[] {
   const bindings: ExportBinding[] = []
 
   for (const statement of source.statements) {
@@ -253,7 +268,31 @@ function collectExports(source: ts.SourceFile): ExportBinding[] {
     ) {
       for (const element of statement.exportClause.elements) {
         const local = (element.propertyName ?? element.name).text
-        bindings.push({ localName: local, exportName: element.name.text })
+        const exported = element.name.text
+        if (exported === 'default') {
+          bindings.push({ localName: local, exportName: nextDefaultName(), isDefault: true })
+        } else {
+          bindings.push({ localName: local, exportName: exported })
+        }
+      }
+    }
+
+    if (ts.isExportAssignment(statement) && !statement.isExportEquals) {
+      const expression = statement.expression
+      const exportName = nextDefaultName()
+      if (ts.isIdentifier(expression)) {
+        bindings.push({
+          localName: expression.text,
+          exportName,
+          isDefault: true,
+        })
+      } else {
+        bindings.push({
+          localName: exportName,
+          exportName,
+          isDefault: true,
+          inlineInitializer: expression,
+        })
       }
     }
   }
