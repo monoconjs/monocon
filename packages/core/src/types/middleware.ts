@@ -2,12 +2,16 @@ import type { RouteMiddlewareContext } from '../global.ts'
 import type { MaybePromise, ProvidedOfHook, Simplify } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 import type { ErrorCode, ErrorContextOf } from './error.ts'
+import type { RouteMethod } from './http.ts'
 
-export type MiddlewareFor<Path extends string> = Path extends keyof RouteMiddlewareContext
-  ? RouteMiddlewareContext[Path] extends object
-    ? RouteMiddlewareContext[Path]
+type MethodPath<Method extends RouteMethod, Path extends string> = `${Method} ${Path}`
+
+export type MiddlewareFor<Method extends RouteMethod, Path extends string> =
+  MethodPath<Method, Path> extends keyof RouteMiddlewareContext
+    ? RouteMiddlewareContext[MethodPath<Method, Path>] extends object
+      ? RouteMiddlewareContext[MethodPath<Method, Path>]
+      : {}
     : {}
-  : {}
 
 export interface MiddlewarePatternObject {
   readonly include: readonly string[]

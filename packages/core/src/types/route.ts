@@ -78,7 +78,7 @@ type HeaderNamesOf<Options> = Options extends { headers: infer Parsed extends Sc
   : string
 
 export type RouteContext<State extends RouteState> = Context<
-  MiddlewareFor<State['~path']> & State['~provided'],
+  MiddlewareFor<State['~method'], State['~path']> & State['~provided'],
   ParamsOf<State['~path'], OptionsOf<State>>,
   QueryOf<OptionsOf<State>>,
   BodyOf<OptionsOf<State>>,
@@ -112,7 +112,7 @@ export type RouteResponseHook<State extends RouteState> = (
 
 export type RouteErrorContext<State extends RouteState> = ErrorContextOf<
   ErrorCode,
-  MiddlewareFor<State['~path']> & State['~provided'],
+  MiddlewareFor<State['~method'], State['~path']> & State['~provided'],
   ParamsOf<State['~path'], OptionsOf<State>>,
   QueryOf<OptionsOf<State>>,
   BodyOf<OptionsOf<State>>,
