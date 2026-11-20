@@ -4,6 +4,28 @@ All notable changes to `monocon` are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-11-20
+
+### Added
+
+- Add `defineGroup(prefix, options?, meta?)` with all route methods, nested groups, and final prefixed paths in generated declarations.
+- Support method-prefixed middleware patterns such as `GET /users/*` with method-specific generated context.
+- Generate a global `RouteRecords` map keyed by path and method for each route type.
+- Recognize default exports when collecting compiler declarations.
+
+### Changed
+
+- Require `start()` to receive routes, middlewares, and port explicitly as namespace objects or ordered arrays.
+- Change `defineConfig.entry` to a string array of files and glob patterns with no fixed entry names.
+- Split generated `.monocon` output into middleware, error, and route files imported by `types.d.ts`.
+- Keep `monocon build` as a plain compile step without registry injection.
+- Limit the `monocon` root entry to documented public API and types.
+
+### Fixed
+
+- Treat a middleware without a pattern as global so it matches every route.
+- Recognize group route factories bound through object destructuring so generated context uses the prefixed path.
+
 ## [0.2.0] - 2026-11-19
 
 ### Added
@@ -73,6 +95,7 @@ Skipped to keep the version number in sync with `@monocon/compiler`.
 - Route matching, request execution, and `bootstrap()` server startup.
 - Code generation CLI with `.monocon` type declarations and `monocon build` for bundler output.
 
+[0.3.0]: https://github.com/monoconjs/monocon/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/monoconjs/monocon/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/monoconjs/monocon/compare/v0.1.0...v0.1.1
 [0.0.3]: https://github.com/monoconjs/monocon/compare/v0.0.1...v0.0.3
