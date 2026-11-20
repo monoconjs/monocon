@@ -1,6 +1,6 @@
 # @monocon/compiler
 
-The code generation CLI for [monocon](https://www.npmjs.com/package/monocon). It scans your route and middleware declarations, generates type declarations that map middleware context onto matched routes, and compiles sources for bundlers.
+The declaration generator and CLI for [monocon](https://www.npmjs.com/package/monocon). It scans your route and middleware declarations and generates type declarations that map middleware context onto matched routes. It can also compile sources for bundlers, but never participates in runtime wiring.
 
 This package is bundled as a dependency of `monocon` and powers its `monocon` command. Installing `monocon` gives you the command; you can also install this package directly if you only need the tooling.
 
@@ -15,17 +15,21 @@ Requires Node.js 22 or later.
 ## Commands
 
 ```sh
-monocon gen [command...]   # generate .monocon declarations, then optionally run a command
+monocon gen [command...]   # write .monocon declarations, then optionally run a command
 monocon gen --watch [command...]  # regenerate on changes and restart the command
-monocon build [command...] # compile sources to .monocon-dist, then optionally run a command
+monocon build [command...] # compile sources to .monocon-dist for bundlers, then optionally run a command
 ```
 
 ### `monocon gen`
 
-Scans the entry files configured in `monocon.config.ts` and writes to `.monocon/`:
+Scans the entry files configured in `monocon.config.ts` and writes four declaration files to `.monocon/`:
 
-- `types.d.ts` — module augmentation that maps matched middleware to each route path, so handler contexts are typed with the values your middleware provides.
-- `registry.mjs` / `registry.d.mts` — a barrel re-exporting all declarations, consumed by the adapter's `start()` at runtime.
+- `types.d.ts` — entry file that imports the three declaration files below.
+- `middlewares.d.ts` — augments `RouteMiddlewareContext` with the middleware each route path provides.
+- `errors.d.ts` — augments `ErrorMap` and `ErrorStatusMap` from your error factories.
+- `routes.d.ts` — augments `RouteRecords` with each route's type by path and method.
+
+No runtime files are generated. Routes, middlewares and server options are passed to `start()` by your application code.
 
 If a command is appended, it runs after generation.
 
@@ -41,7 +45,7 @@ Press Ctrl+C to stop the watcher and the command together. Since monocon already
 
 ### `monocon build`
 
-Runs generation, then compiles the entry files to `.monocon-dist/`, injecting the generated registry import into `start()` calls (from any platform adapter). The result is consumed by a bundler (for example `tsdown` with `entry: './.monocon-dist/index.js'`).
+Runs generation, then compiles the source files to `.monocon-dist/`. The output is a plain TypeScript compile: no registry import is injected and `start()` calls are left untouched. The result can be consumed by a bundler (for example `tsdown` with `entry: './.monocon-dist/index.js'`).
 
 If a command is appended, it runs after the build completes — for example:
 
@@ -66,8 +70,8 @@ export default defineConfig({
 })
 ```
 
-- `entry` — glob patterns for files to scan (required).
-- `build.outDir` — compiler output directory (default `.monocon-dist`).
+- `entry` — files or glob patterns to scan; no specific entry names are required. A scanned file may export a default array to fix declaration order.
+- `build.outDir` — output directory for `monocon build` (default `.monocon-dist`). Generation always writes to `.monocon/`.
 
 When using the bundled CLI from `monocon`, import `defineConfig` from `monocon/config` instead.
 

@@ -2,6 +2,7 @@ import type { Adapter } from './contracts.ts'
 import { createStart } from './shared/start.ts'
 
 export type { Adapter, RunningServer, ServerConfig } from './contracts.ts'
+export type { Start, StartOptions } from './shared/start.ts'
 
 const bunAdapter: Adapter = {
   listen() {

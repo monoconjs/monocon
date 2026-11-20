@@ -6,15 +6,21 @@ import { describe, expect, it } from 'vitest'
 
 import { generate } from '../src/generate.ts'
 
+const CONFIG = `import { defineConfig } from 'monocon/config'\nexport default defineConfig({ entry: ['src/**/*.ts'] })\n`
+
 async function fixture(files: Record<string, string>): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'monocon-generate-default-'))
-  await mkdir(join(dir, 'src'), { recursive: true })
+  await mkdir(join(dir, 'src', 'routers'), { recursive: true })
+  await mkdir(join(dir, 'src', 'middlewares'), { recursive: true })
+  await writeFile(join(dir, 'monocon.config.ts'), CONFIG)
+  await writeFile(join(dir, 'src', 'index.ts'), `export {}\n`)
   await writeFile(
-    join(dir, 'monocon.config.ts'),
-    `import { defineConfig } from 'monocon/config'\nexport default defineConfig({ entry: ['src/**/*.ts'] })\n`,
+    join(dir, 'src', 'routers', 'index.ts'),
+    files['routers'] ?? `export default []\n`,
   )
-  await Promise.all(
-    Object.entries(files).map(([name, text]) => writeFile(join(dir, 'src', name), text)),
+  await writeFile(
+    join(dir, 'src', 'middlewares', 'index.ts'),
+    files['middlewares'] ?? `export default []\n`,
   )
   return dir
 }
@@ -24,41 +30,53 @@ async function read(dir: string, name: string): Promise<string> {
 }
 
 describe('generate default exports', () => {
-  it('forwards default exports through the registry with their aliases', async () => {
+  it('generates the entry and three declaration files', async () => {
     const dir = await fixture({
-      'routes.ts': `export const health = get('/health', {}).handle(() => ({}))`,
-      'middlewares.ts': `export default defineMiddleware({ onRequest: () => ({ trace: 'x' }) }, '*')`,
+      routers: `export const health = get('/health', {}).handle(() => ({}))
+export default [health]`,
+      middlewares: `export const logger = defineMiddleware({ onRequest: () => ({ trace: 'x' }) }, '*')
+export default [logger]`,
     })
 
-    await generate(dir, 'monocon.config.ts')
-    const registry = await read(dir, 'registry.mjs')
-    const registryTypes = await read(dir, 'registry.d.mts')
+    const result = await generate(dir, 'monocon.config.ts')
 
-    expect(registry).toMatch(/export \{ default as __default_0 \} from '.*middlewares\.js'/)
-    expect(registryTypes).toMatch(/export \{ default as __default_0 \} from '.*middlewares\.js'/)
+    expect(result.files.map((file) => file.path)).toEqual([
+      join(dir, '.monocon', 'types.d.ts'),
+      join(dir, '.monocon', 'middlewares.d.ts'),
+      join(dir, '.monocon', 'errors.d.ts'),
+      join(dir, '.monocon', 'routes.d.ts'),
+    ])
+    const types = await read(dir, 'types.d.ts')
+    expect(types).toContain("import './middlewares.js'")
+    expect(types).toContain("import './errors.js'")
+    expect(types).toContain("import './routes.js'")
   })
 
-  it('references the default middleware by alias in generated types', async () => {
+  it('references a middleware by its export name in generated types', async () => {
     const dir = await fixture({
-      'routes.ts': `export const health = get('/health', {}).handle(() => ({}))`,
-      'middlewares.ts': `export default defineMiddleware({ onRequest: () => ({ trace: 'x' }) }, '*')`,
+      routers: `export const health = get('/health', {}).handle(() => ({}))
+export default [health]`,
+      middlewares: `export const logger = defineMiddleware({ onRequest: () => ({ trace: 'x' }) }, '*')
+export default [logger]`,
     })
 
     await generate(dir, 'monocon.config.ts')
-    const types = await read(dir, 'types.d.ts')
+    const middlewares = await read(dir, 'middlewares.d.ts')
 
-    expect(types).toMatch(/import \{ default as __default_0 \} from '.*middlewares\.js'/)
-    expect(types).toContain(`"GET /health": (typeof __default_0)['~provided']`)
+    expect(middlewares).toMatch(/import \{ logger \} from '.*middlewares\/index\.js'/)
+    expect(middlewares).toContain(`"GET /health": (typeof logger)['~provided']`)
   })
 
-  it('references a default route through its namespace default', async () => {
+  it('emits empty context blocks when the arrays are empty', async () => {
     const dir = await fixture({
-      'route.ts': `export default get('/health', {}).handle(() => ({}))`,
+      routers: `export default []`,
+      middlewares: `export default []`,
     })
 
     await generate(dir, 'monocon.config.ts')
-    const types = await read(dir, 'types.d.ts')
 
-    expect(types).toContain('get: typeof __routes_0.default')
+    expect(await read(dir, 'middlewares.d.ts')).toContain('interface RouteMiddlewareContext {')
+    expect(await read(dir, 'errors.d.ts')).toContain('interface ErrorMap {')
+    expect(await read(dir, 'routes.d.ts')).toContain('interface RouteRecords {')
   })
 })

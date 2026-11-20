@@ -1,13 +1,7 @@
 import { z } from 'zod'
 
-import {
-  assignErrorName,
-  clearErrorHandlers,
-  createError,
-  isErrorFactory,
-} from '../packages/core/src/errors/index.ts'
+import { clearErrorHandlers, createError } from '../packages/core/src/errors/index.ts'
 import { execute } from '../packages/core/src/execute.ts'
-import { collectDeclarations } from '../packages/core/src/fetch-handler.ts'
 import type { RuntimeRoute } from '../packages/core/src/route.ts'
 import {
   NoHandlerError,
@@ -28,13 +22,12 @@ function request(path: string): Request {
 }
 
 function conflictFactory() {
-  const factory = defineError({
+  return defineError({
+    name: 'CONFLICT_ERROR',
     status: 409,
     payload: z.object({ reason: z.string() }),
     toResponse: (body) => Response.json(body, { status: 409 }),
   })
-  assignErrorName(factory as unknown as Parameters<typeof assignErrorName>[0], 'CONFLICT_ERROR')
-  return factory
 }
 
 describe('error factory (runtime)', () => {
@@ -89,27 +82,6 @@ describe('error factory (runtime)', () => {
     expect(constructed.name).toBe(called.name)
     expect(constructed.status).toBe(called.status)
     expect(constructed.error).toEqual(called.error)
-  })
-
-  it('is detectable as a factory and collects names from registry', () => {
-    const factory = defineError({ status: 409, payload: z.object({ reason: z.string() }) })
-    expect(isErrorFactory(factory)).toBe(true)
-
-    const route = asRoute(get('/x').handle(() => ({ ok: true })))
-    collectDeclarations({ Conflict: factory as never, ep: route as never })
-    const thrown = factory({ reason: 'dup' }) as unknown as { name: string }
-    expect(thrown.name).toBe('Conflict')
-  })
-
-  it('explicit name takes precedence over the registry export name', () => {
-    const factory = defineError({
-      name: 'CONFLICT',
-      status: 409,
-      payload: z.object({ reason: z.string() }),
-    })
-    collectDeclarations({ ExportedAs: factory as never })
-    const thrown = factory({ reason: 'x' }) as unknown as { name: string }
-    expect(thrown.name).toBe('CONFLICT')
   })
 })
 
