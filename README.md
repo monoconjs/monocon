@@ -96,7 +96,7 @@ const tracked = get('/users/:id')
 
 ## Middleware
 
-A middleware matches routes by path pattern and contributes typed context to them. Patterns accept a glob string or an `{ include, exclude }` object.
+A middleware matches routes by path pattern and contributes typed context to them. Patterns accept a glob string or an `{ include, exclude }` object; omitting the pattern matches every route.
 
 ```ts
 // src/middlewares/logger.ts

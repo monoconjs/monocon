@@ -43,10 +43,11 @@ function methodMatches(
 }
 
 export function patternMatches(
-  pattern: MiddlewarePattern,
+  pattern: MiddlewarePattern | undefined,
   path: string,
   method?: RouteMethod,
 ): boolean {
+  if (pattern === undefined) return true
   if (typeof pattern === 'string') return globPatternMatches(pattern, path, method)
 
   return (
