@@ -41,6 +41,19 @@ export const health = v1.get('/health').handle(() => ({}))
     ])
   })
 
+  it('collects destructured group factories with prefixed paths', async () => {
+    const file = await entry(`const { get, post: create } = defineGroup('/users')
+export const one = get('/:id')
+export const many = create('').handle(() => ({}))
+`)
+    const result = await analyzeEntries([file])
+
+    expect(result.declarations).toEqual([
+      { kind: 'route', file, exportName: 'one', method: 'GET', path: '/users/:id' },
+      { kind: 'route', file, exportName: 'many', method: 'POST', path: '/users' },
+    ])
+  })
+
   it('warns when a group prefix is not a string literal', async () => {
     const prefix = '/api'
     const file = await entry(`const prefix = '${prefix}'
