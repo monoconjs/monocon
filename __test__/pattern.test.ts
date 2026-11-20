@@ -10,6 +10,13 @@ describe('pattern matching', () => {
     expect(patternMatches('*', '/a/b/c')).toBe(true)
   })
 
+  it('treats a missing pattern as global', () => {
+    const global = defineMiddleware({})
+
+    expect(patternMatches(undefined, '/users/1', 'GET')).toBe(true)
+    expect(matchMiddlewares([global], '/users/1', 'GET')).toEqual([global])
+  })
+
   it('matches a single-segment wildcard', () => {
     expect(patternMatches('/admin/*', '/admin')).toBe(false)
     expect(patternMatches('/admin/*', '/admin/users')).toBe(true)
