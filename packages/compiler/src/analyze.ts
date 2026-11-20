@@ -192,7 +192,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
 
     const bindings = collectExports(source, nextDefaultName)
     const initializers = collectInitializers(source)
-    const groups = collectGroupPrefixes(source, file, warnings)
+    const groups = collectGroups(source, file, warnings)
     for (const binding of bindings) {
       if (binding.inlineInitializer) initializers.set(binding.localName, binding.inlineInitializer)
     }
@@ -233,7 +233,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
 
       if (ROUTE_FACTORIES.has(factory.name)) {
         const path = readPath(factory.call, file, warnings)
-        if (!path) continue
+        if (path === undefined) continue
         declarations.push({
           kind: 'route',
           file,
@@ -255,18 +255,31 @@ interface FactoryCall {
   readonly prefix: string
 }
 
-function findFactoryCall(
-  expression: ts.Expression,
-  groups: ReadonlyMap<string, string>,
-): FactoryCall | undefined {
+interface GroupMethodBinding {
+  readonly method: string
+  readonly prefix: string
+}
+
+interface GroupInfo {
+  readonly prefixes: Map<string, string>
+  readonly methods: Map<string, GroupMethodBinding>
+}
+
+function findFactoryCall(expression: ts.Expression, groups: GroupInfo): FactoryCall | undefined {
   if (ts.isCallExpression(expression)) {
     const callee = expression.expression
-    if (ts.isIdentifier(callee) && isFactoryName(callee.text)) {
-      return { name: callee.text, call: expression, prefix: '' }
+    if (ts.isIdentifier(callee)) {
+      const binding = groups.methods.get(callee.text)
+      if (binding !== undefined) {
+        return { name: binding.method, call: expression, prefix: binding.prefix }
+      }
+      if (isFactoryName(callee.text)) {
+        return { name: callee.text, call: expression, prefix: '' }
+      }
     }
     if (ts.isPropertyAccessExpression(callee)) {
       if (ROUTE_FACTORIES.has(callee.name.text) && ts.isIdentifier(callee.expression)) {
-        const prefix = groups.get(callee.expression.text)
+        const prefix = groups.prefixes.get(callee.expression.text)
         if (prefix !== undefined) {
           return { name: callee.name.text, call: expression, prefix }
         }
@@ -284,12 +297,9 @@ function findFactoryCall(
   return undefined
 }
 
-function collectGroupPrefixes(
-  source: ts.SourceFile,
-  file: string,
-  warnings: string[],
-): Map<string, string> {
-  const groups = new Map<string, string>()
+function collectGroups(source: ts.SourceFile, file: string, warnings: string[]): GroupInfo {
+  const prefixes = new Map<string, string>()
+  const methods = new Map<string, GroupMethodBinding>()
   let changed = true
 
   while (changed) {
@@ -297,16 +307,47 @@ function collectGroupPrefixes(
     for (const statement of source.statements) {
       if (!ts.isVariableStatement(statement)) continue
       for (const declaration of statement.declarationList.declarations) {
-        if (!ts.isIdentifier(declaration.name) || declaration.initializer === undefined) continue
-        const prefix = readGroupPrefix(declaration.initializer, groups, file, warnings)
-        if (prefix === undefined || groups.get(declaration.name.text) === prefix) continue
-        groups.set(declaration.name.text, prefix)
-        changed = true
+        if (declaration.initializer === undefined) continue
+        const prefix = groupPrefix(declaration.initializer, prefixes, file, warnings)
+        if (prefix === undefined) continue
+
+        if (ts.isIdentifier(declaration.name)) {
+          if (prefixes.get(declaration.name.text) === prefix) continue
+          prefixes.set(declaration.name.text, prefix)
+          changed = true
+          continue
+        }
+
+        if (!ts.isObjectBindingPattern(declaration.name)) continue
+        for (const element of declaration.name.elements) {
+          if (ts.isOmittedExpression(element) || !ts.isIdentifier(element.name)) continue
+          const method = element.propertyName
+            ? propertyName(element.propertyName)
+            : element.name.text
+          if (method === undefined || !ROUTE_FACTORIES.has(method)) continue
+
+          const local = element.name.text
+          const binding = { method, prefix }
+          const existing = methods.get(local)
+          if (existing?.method === binding.method && existing.prefix === binding.prefix) continue
+          methods.set(local, binding)
+          changed = true
+        }
       }
     }
   }
 
-  return groups
+  return { prefixes, methods }
+}
+
+function groupPrefix(
+  expression: ts.Expression,
+  prefixes: ReadonlyMap<string, string>,
+  file: string,
+  warnings: string[],
+): string | undefined {
+  if (ts.isIdentifier(expression)) return prefixes.get(expression.text)
+  return readGroupPrefix(expression, prefixes, file, warnings)
 }
 
 function readGroupPrefix(

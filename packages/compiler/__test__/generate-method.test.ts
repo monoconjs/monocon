@@ -57,6 +57,21 @@ export default [logger]`,
     expect(types).toContain('"DELETE /users/:id": (typeof logger)[\'~provided\']')
   })
 
+  it('supports destructured group factories', async () => {
+    const dir = await fixture(
+      `const { get } = defineGroup('/users')
+export const getUser = get('/:id').handle(() => ({}))
+export default [getUser]`,
+      `export const logger = defineMiddleware({ onRequest: () => ({ requestId: 'req-1' }) }, '*')
+export default [logger]`,
+    )
+
+    await generate(dir, 'monocon.config.ts')
+    const types = await readFile(join(dir, '.monocon', 'middlewares.d.ts'), 'utf8')
+
+    expect(types).toContain('"GET /users/:id": (typeof logger)[\'~provided\']')
+  })
+
   it('uses prefixed paths for group routes', async () => {
     const dir = await fixture(
       `const api = defineGroup('/api')
