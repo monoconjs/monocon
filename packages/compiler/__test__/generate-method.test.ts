@@ -57,6 +57,22 @@ export default [logger]`,
     expect(types).toContain('"DELETE /users/:id": (typeof logger)[\'~provided\']')
   })
 
+  it('uses prefixed paths for group routes', async () => {
+    const dir = await fixture(
+      `const api = defineGroup('/api')
+export const listUsers = api.get('/users').handle(() => ({}))
+export default [listUsers]`,
+      `export const readAuth = defineMiddleware({ onRequest: () => ({ read: true }) }, 'GET /api/users')
+export default [readAuth]`,
+    )
+
+    await generate(dir, 'monocon.config.ts')
+    const types = await readFile(join(dir, '.monocon', 'middlewares.d.ts'), 'utf8')
+
+    expect(types).toContain('"GET /api/users": (typeof readAuth)[\'~provided\']')
+    expect(types).not.toContain('"GET /users"')
+  })
+
   it('respects the middleware array order in the provided intersection', async () => {
     const dir = await fixture(
       `export const page = get('/page').handle(() => ({}))

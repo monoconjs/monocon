@@ -94,6 +94,21 @@ const tracked = get('/users/:id')
   .onResponse((_ctx, response) => response)
 ```
 
+## Route groups
+
+Use `defineGroup(prefix, options?, meta?)` to share a path prefix, options, and meta across routes. Group methods behave like the top-level route factories and produce normal routes with the prefixed path.
+
+```ts
+import { defineGroup } from 'monocon'
+
+const users = defineGroup('/users', { meta: { tags: ['Users'] } })
+
+export const getUser = users.get('/:id').handle((ctx) => ({ id: ctx.params.id }))
+export const listUsers = users.get('/').handle(() => [])
+```
+
+Groups can be nested, and route-level options override group-level options. The compiler generates declarations using the final prefixed paths, so middleware context and route records stay in sync.
+
 ## Middleware
 
 A middleware matches routes by path pattern and contributes typed context to them. Patterns accept a glob string or an `{ include, exclude }` object; omitting the pattern matches every route.
