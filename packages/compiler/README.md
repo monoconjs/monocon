@@ -73,6 +73,8 @@ export default defineConfig({
 - `entry` — files or glob patterns to scan; no specific entry names are required. A scanned file may export a default array to fix declaration order.
 - `build.outDir` — output directory for `monocon build` (default `.monocon-dist`). Generation always writes to `.monocon/`.
 
+Routes created with `defineGroup(...)` are recognized when the group is declared in the same scanned file. Their declarations use the final prefixed path, so middleware context and route records match runtime routing.
+
 When using the bundled CLI from `monocon`, import `defineConfig` from `monocon/config` instead.
 
 ## License

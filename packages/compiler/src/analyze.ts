@@ -27,6 +27,13 @@ const METHOD_NAMES: Record<string, string> = {
   all: 'ALL',
 }
 
+function joinPath(prefix: string, path: string): string {
+  const base = prefix === '/' ? '' : prefix.replace(/\/+$/, '')
+  if (base === '') return path
+  if (path === '/' || path === '') return base
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+}
+
 export type Pattern =
   | { readonly kind: 'glob'; readonly value: string }
   | { readonly kind: 'rules'; readonly include: string[]; readonly exclude: string[] }
@@ -185,6 +192,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
 
     const bindings = collectExports(source, nextDefaultName)
     const initializers = collectInitializers(source)
+    const groups = collectGroupPrefixes(source, file, warnings)
     for (const binding of bindings) {
       if (binding.inlineInitializer) initializers.set(binding.localName, binding.inlineInitializer)
     }
@@ -193,7 +201,7 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
       const initializer = initializers.get(binding.localName)
       if (!initializer) continue
 
-      const factory = findFactoryCall(initializer)
+      const factory = findFactoryCall(initializer, groups)
       if (!factory) continue
 
       const defaultFlag = binding.isDefault ? { default: true as const } : {}
@@ -231,33 +239,106 @@ export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResul
           file,
           exportName: binding.exportName,
           method: METHOD_NAMES[factory.name] ?? factory.name.toUpperCase(),
-          path,
+          path: joinPath(factory.prefix, path),
           ...defaultFlag,
         })
       }
     }
   }
 
-  return { declarations, warnings }
+  return { declarations, warnings: [...new Set(warnings)] }
 }
 
 interface FactoryCall {
   readonly name: string
   readonly call: ts.CallExpression
+  readonly prefix: string
 }
 
-function findFactoryCall(expression: ts.Expression): FactoryCall | undefined {
+function findFactoryCall(
+  expression: ts.Expression,
+  groups: ReadonlyMap<string, string>,
+): FactoryCall | undefined {
   if (ts.isCallExpression(expression)) {
     const callee = expression.expression
     if (ts.isIdentifier(callee) && isFactoryName(callee.text)) {
-      return { name: callee.text, call: expression }
+      return { name: callee.text, call: expression, prefix: '' }
     }
-    if (ts.isPropertyAccessExpression(callee)) return findFactoryCall(callee.expression)
-    if (ts.isCallExpression(callee)) return findFactoryCall(callee)
+    if (ts.isPropertyAccessExpression(callee)) {
+      if (ROUTE_FACTORIES.has(callee.name.text) && ts.isIdentifier(callee.expression)) {
+        const prefix = groups.get(callee.expression.text)
+        if (prefix !== undefined) {
+          return { name: callee.name.text, call: expression, prefix }
+        }
+      }
+      return findFactoryCall(callee.expression, groups)
+    }
+    if (ts.isCallExpression(callee)) return findFactoryCall(callee, groups)
   }
-  if (ts.isPropertyAccessExpression(expression)) return findFactoryCall(expression.expression)
-  if (ts.isParenthesizedExpression(expression)) return findFactoryCall(expression.expression)
+  if (ts.isPropertyAccessExpression(expression)) {
+    return findFactoryCall(expression.expression, groups)
+  }
+  if (ts.isParenthesizedExpression(expression)) {
+    return findFactoryCall(expression.expression, groups)
+  }
   return undefined
+}
+
+function collectGroupPrefixes(
+  source: ts.SourceFile,
+  file: string,
+  warnings: string[],
+): Map<string, string> {
+  const groups = new Map<string, string>()
+  let changed = true
+
+  while (changed) {
+    changed = false
+    for (const statement of source.statements) {
+      if (!ts.isVariableStatement(statement)) continue
+      for (const declaration of statement.declarationList.declarations) {
+        if (!ts.isIdentifier(declaration.name) || declaration.initializer === undefined) continue
+        const prefix = readGroupPrefix(declaration.initializer, groups, file, warnings)
+        if (prefix === undefined || groups.get(declaration.name.text) === prefix) continue
+        groups.set(declaration.name.text, prefix)
+        changed = true
+      }
+    }
+  }
+
+  return groups
+}
+
+function readGroupPrefix(
+  expression: ts.Expression,
+  groups: ReadonlyMap<string, string>,
+  file: string,
+  warnings: string[],
+): string | undefined {
+  if (!ts.isCallExpression(expression)) return undefined
+
+  const callee = expression.expression
+  let parent: string | undefined
+  if (ts.isIdentifier(callee)) {
+    if (callee.text !== 'defineGroup') return undefined
+    parent = ''
+  } else if (ts.isPropertyAccessExpression(callee) && callee.name.text === 'group') {
+    if (ts.isIdentifier(callee.expression)) {
+      parent = groups.get(callee.expression.text)
+    } else {
+      parent = readGroupPrefix(callee.expression, groups, file, warnings)
+    }
+  } else {
+    return undefined
+  }
+
+  if (parent === undefined) return undefined
+  const [argument] = expression.arguments
+  if (!argument || !ts.isStringLiteral(argument)) {
+    warnings.push(`group prefix in ${relative(process.cwd(), file)} must be a string literal`)
+    return undefined
+  }
+  return joinPath(parent, argument.text)
 }
 
 function isFactoryName(name: string): boolean {

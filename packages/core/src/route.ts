@@ -77,9 +77,28 @@ function createBuilder<
   return builder as unknown as RouteBuilder<'onRequest', RouteState<Method, Path, Options>>
 }
 
-function createRouteFactory<Method extends RouteMethod>(method: Method): RouteFactory<Method> {
-  return <Path extends string, Options extends RouteOptions = {}>(path: Path, options?: Options) =>
-    createBuilder<Method, Path, Options>(method, path, options ?? {})
+export function joinPath(prefix: string, path: string): string {
+  const base = prefix === '/' ? '' : prefix.replace(/\/+$/, '')
+  if (base === '') return path
+  if (path === '/' || path === '') return base
+  return `${base}${path.startsWith('/') ? path : `/${path}`}`
+}
+
+export function mergeRouteOptions(base: RouteOptions, override: RouteOptions): RouteOptions {
+  const merged: RouteOptions = { ...base, ...override }
+  if (base.meta !== undefined || override.meta !== undefined) {
+    merged.meta = { ...base.meta, ...override.meta }
+  }
+  return merged
+}
+
+export function createRouteFactory<Method extends RouteMethod>(
+  method: Method,
+  prefix = '',
+  options: RouteOptions = {},
+): RouteFactory<Method> {
+  return (path: string, routeOptions?: RouteOptions) =>
+    createBuilder(method, joinPath(prefix, path), mergeRouteOptions(options, routeOptions ?? {}))
 }
 
 export const get: RouteFactory<'GET'> = createRouteFactory('GET')
