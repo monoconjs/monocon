@@ -74,7 +74,7 @@ describe('isIgnored', () => {
   it('ignores paths containing an ignored segment', () => {
     expect(isIgnored('/project/src/app.ts', undefined, ignored)).toBe(false)
     expect(isIgnored('/project/node_modules/pkg/index.ts', undefined, ignored)).toBe(true)
-    expect(isIgnored('/project/.monocon/registry.mjs', undefined, ignored)).toBe(true)
+    expect(isIgnored('/project/.monocon/types.d.ts', undefined, ignored)).toBe(true)
     expect(isIgnored('/project/custom-out/index.js', undefined, ignored)).toBe(true)
   })
 

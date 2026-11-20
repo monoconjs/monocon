@@ -14,7 +14,7 @@ Requires Node.js 22 or later.
 
 ## Quick start
 
-Define a route and export it. Then start the server with `start()` from a platform adapter.
+Define routes and middleware, export them in ordered arrays, then pass everything to `start()` explicitly.
 
 ```ts
 // src/routes/users.ts
@@ -28,29 +28,39 @@ export const getUser = get('/users/:id', {
 ```
 
 ```ts
-// src/configuration.ts
-import type { ServerConfig } from 'monocon/node'
+// src/routes/index.ts
+import { getUser } from './users.ts'
 
-export default {
-  port: 3000,
-} satisfies ServerConfig
+export default [getUser]
+```
+
+```ts
+// src/middlewares/index.ts
+import { defineMiddleware } from 'monocon'
+
+export const logger = defineMiddleware({ onRequest: () => ({ requestId: 'req-1' }) }, '*')
+
+export default [logger]
 ```
 
 ```ts
 // src/index.ts
 import { start } from 'monocon/node'
 
-const server = await start()
+import middlewares from './middlewares/index.ts'
+import routes from './routes/index.ts'
+
+const server = await start({ routes, middlewares, port: 3000 })
 console.log(`listening on http://localhost:${server.config.port}`)
 ```
 
-Generate the registry, then run your app:
+Generate the declarations, then run your app:
 
 ```sh
 npx monocon gen tsx src/index.ts
 ```
 
-The adapter's `start()` loads `configuration.ts` from the working directory (or its `src/` directory), discovers the generated registry at `.monocon/registry.mjs`, and starts an HTTP server. If no config file is found, it defaults to port `3000`.
+The compiler only writes declarations under `.monocon/`: `types.d.ts` imports `middlewares.d.ts`, `errors.d.ts` and `routes.d.ts`. `start()` does not read generated files or configuration files: routes, middlewares and `port` are supplied by your code.
 
 ## Routes
 
@@ -108,26 +118,28 @@ export const auth = defineMiddleware(
 )
 ```
 
-Monocon generates a declaration (`.monocon/types.d.ts`) that maps each matched middleware to its route path. As a result, a handler can consume `ctx.requestId`, `ctx.user`, and `ctx.role` with full type safety — no manual context typing required.
+Monocon generates declarations under `.monocon/` that map each matched middleware to its route path. As a result, a handler can consume `ctx.requestId`, `ctx.user`, and `ctx.role` with full type safety — no manual context typing required.
 
-## Configuration
+## Startup options
 
-### Startup configuration
-
-`configuration.ts` (or any of `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs`) holds runtime options and is loaded automatically by the adapter's `start()` from the working directory or `src/`.
+Every adapter's `start()` takes the same options. Pass routes, middlewares and `port` yourself; nothing is discovered from generated files or `configuration.ts`.
 
 ```ts
-import type { ServerConfig } from 'monocon/node'
+import { start } from 'monocon/node'
 
-export default {
+const server = await start({
+  routes,
+  middlewares,
   port: 3000,
   hostname: '0.0.0.0',
-} satisfies ServerConfig
+})
 ```
 
-### CLI configuration
+Both `routes` and `middlewares` accept a namespace import or an ordered array. Order is significant for middlewares and is the source of truth for the generated context types.
 
-`monocon.config.ts` defines code generation for the CLI. Import `defineConfig` from `monocon/config`:
+## Compiler configuration
+
+`monocon.config.ts` defines where the compiler looks for declarations. Import `defineConfig` from `monocon/config`:
 
 ```ts
 import { defineConfig } from 'monocon/config'
@@ -140,21 +152,25 @@ export default defineConfig({
 })
 ```
 
+`entry` is a list of files or glob patterns to scan. Any scanned file may export a default array to fix declaration order. `build.outDir` is only used by `monocon build`; generation always writes to `.monocon/`.
+
 ## CLI
 
 The `monocon` command is provided by the `monocon` package, powered by the bundled `@monocon/compiler`.
 
 ```sh
-monocon gen [command...]   # generate .monocon declarations, then optionally run a command
+monocon gen [command...]   # write .monocon declarations, then optionally run a command
 monocon gen --watch [command...]  # regenerate on changes and restart the command
-monocon build [command...] # compile sources to .monocon-dist, then optionally run a command
+monocon build [command...] # compile sources to .monocon-dist for bundlers, then optionally run a command
 ```
+
+`gen` only emits declarations. `build` is a plain TypeScript compile step for bundlers; it does not inject a registry or alter `start()` calls.
 
 ## Packages
 
 - `monocon` — umbrella package; re-exports the runtime API (`get`, `post`, `middleware`, types).
 - `@monocon/core` — platform-neutral core runtime with no `node:` dependencies.
-- `@monocon/compiler` — code generation CLI (the `monocon` command).
+- `@monocon/compiler` — declaration generator and CLI (the `monocon` command).
 - `@monocon/adapter` — platform adapters, exposed as `./node`, `./bun`, `./deno`, `./workers`.
 
 ## Exports

@@ -14,7 +14,6 @@ export interface RuntimeErrorInstance extends Error {
 export interface RuntimeErrorFactory {
   (payload: unknown): RuntimeErrorInstance
   new (payload: unknown): RuntimeErrorInstance
-  readonly '~factory': true
   readonly '~payload': unknown
   readonly '~status': number
   '~name': string | undefined
@@ -42,7 +41,6 @@ function buildFactory<Payload, Status extends number>(
       })
     },
     {
-      ['~factory']: true as const,
       ['~payload']: errorSchema,
       ['~status']: config.status,
       ['~name']: initialName,
@@ -78,13 +76,4 @@ export function defineBuiltin<Payload, Status extends number>(
 
 export function createError(name: string, status: number, error: unknown): RuntimeErrorInstance {
   return Object.assign(new Error(`MonoconError: ${name}`), { name, status, error })
-}
-
-export function isErrorFactory(value: unknown): value is RuntimeErrorFactory {
-  return typeof value === 'function' && '~factory' in value && value['~factory'] === true
-}
-
-export function assignErrorName(factory: RuntimeErrorFactory, name: string): void {
-  // An explicit `name` passed to defineError() takes precedence over the registry export name.
-  if (factory['~name'] === undefined) factory['~name'] = name
 }

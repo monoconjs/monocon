@@ -8,7 +8,7 @@ export interface RuntimeMiddleware {
 export function defineMiddleware<
   const Hooks extends MiddlewareHooks,
   const Pattern extends MiddlewarePattern,
->(hooks: Hooks, pattern: Pattern): Middleware<Pattern, Hooks> {
+>(hooks: Hooks, pattern?: Pattern): Middleware<Pattern, Hooks> {
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return { '~pattern': pattern, '~hooks': hooks } as unknown as Middleware<Pattern, Hooks>
 }

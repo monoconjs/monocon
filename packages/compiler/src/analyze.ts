@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { relative } from 'node:path'
+import { dirname, relative, resolve } from 'node:path'
 
 import * as ts from 'typescript'
 
@@ -61,6 +61,108 @@ export type Declaration = RouteDecl | MiddlewareDecl | ErrorDecl
 export interface AnalyzeResult {
   readonly declarations: Declaration[]
   readonly warnings: string[]
+}
+
+interface NamespaceImport {
+  readonly local: string
+  readonly target: string
+}
+
+/**
+ * Reads the `export default [ ... ]` array of a scanned file and returns the
+ * declaration names in source order. Elements may be:
+ * - a plain identifier (`getUser`);
+ * - a namespace-qualified access (`routes.getUser`);
+ * - a whole namespace import (`routes` from `import * as routes from '...'`),
+ *   which expands to every named export of the imported file. Order within
+ *   an expanded namespace is irrelevant for routes (the matcher scores paths).
+ */
+export async function readOrderedNames(file: string): Promise<string[]> {
+  const text = await readFile(file, 'utf8').catch(() => {
+    throw new Error(`Could not read entry: ${file}`)
+  })
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
+  const namespaces = collectNamespaceImports(source, file)
+
+  const assignment = source.statements.find(
+    (statement): statement is ts.ExportAssignment & { expression: ts.ArrayLiteralExpression } =>
+      ts.isExportAssignment(statement) &&
+      !statement.isExportEquals &&
+      ts.isArrayLiteralExpression(statement.expression),
+  )
+  if (assignment === undefined) return []
+
+  const elements = assignment.expression.elements
+  const namespaceTargets = elements.map((element) => {
+    if (!ts.isIdentifier(element)) return undefined
+    return namespaces.find((item) => item.local === element.text)?.target
+  })
+  const expanded = await Promise.all(
+    namespaceTargets.map((target) =>
+      target === undefined ? Promise.resolve([] as string[]) : readNamedExports(target),
+    ),
+  )
+
+  const names: string[] = []
+  for (const [index, element] of elements.entries()) {
+    const namespaceNames = expanded[index]
+    if (namespaceNames !== undefined && namespaceTargets[index] !== undefined) {
+      names.push(...namespaceNames)
+      continue
+    }
+    const name = elementName(element)
+    if (name !== undefined) names.push(name)
+  }
+  return names
+}
+
+function collectNamespaceImports(source: ts.SourceFile, file: string): NamespaceImport[] {
+  const result: NamespaceImport[] = []
+  for (const statement of source.statements) {
+    if (
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      statement.importClause === undefined
+    ) {
+      continue
+    }
+    const bindings = statement.importClause.namedBindings
+    if (bindings === undefined || !ts.isNamespaceImport(bindings)) continue
+    result.push({
+      local: bindings.name.text,
+      target: resolveSourceFile(dirname(file), statement.moduleSpecifier.text),
+    })
+  }
+  return result
+}
+
+function resolveSourceFile(fromDir: string, specifier: string): string {
+  // Entry imports use .ts extensions; strip a leading ./ and resolve.
+  const clean = specifier.startsWith('.') ? specifier : `./${specifier}`
+  return resolve(fromDir, clean)
+}
+
+async function readNamedExports(file: string): Promise<string[]> {
+  const text = await readFile(file, 'utf8').catch(() => '')
+  if (text === '') return []
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
+  const names: string[] = []
+  for (const statement of source.statements) {
+    if (ts.isVariableStatement(statement) && hasExport(statement)) {
+      for (const declaration of statement.declarationList.declarations) {
+        if (ts.isIdentifier(declaration.name)) names.push(declaration.name.text)
+      }
+    }
+  }
+  return names
+}
+
+function elementName(element: ts.Expression): string | undefined {
+  if (ts.isIdentifier(element)) return element.text
+  if (ts.isPropertyAccessExpression(element) && ts.isIdentifier(element.name)) {
+    return element.name.text
+  }
+  return undefined
 }
 
 export async function analyzeEntries(entryFiles: string[]): Promise<AnalyzeResult> {

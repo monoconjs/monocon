@@ -1,5 +1,4 @@
 import { notFoundRoute } from './_not-found.ts'
-import { assignErrorName, isErrorFactory } from './errors/index.ts'
 import { execute } from './execute.ts'
 import type { Matcher } from './matcher.ts'
 import type { RuntimeMiddleware } from './middleware.ts'
@@ -7,24 +6,6 @@ import type { RuntimeRoute } from './route.ts'
 
 export interface FetchHandler {
   (request: Request): Promise<Response>
-}
-
-export interface CollectedDeclarations {
-  readonly routes: RuntimeRoute[]
-  readonly middlewares: RuntimeMiddleware[]
-}
-
-export function collectDeclarations(registry: object): CollectedDeclarations {
-  const routes: RuntimeRoute[] = []
-  const middlewares: RuntimeMiddleware[] = []
-
-  for (const [exportName, value] of Object.entries(registry)) {
-    if (isErrorFactory(value)) assignErrorName(value, exportName)
-    else if (isRoute(value)) routes.push(value)
-    else if (isMiddleware(value)) middlewares.push(value)
-  }
-
-  return { routes, middlewares }
 }
 
 export function createFetchHandler(
@@ -43,7 +24,7 @@ export function createFetchHandler(
   }
 }
 
-function isRoute(value: unknown): value is RuntimeRoute {
+export function isRoute(value: unknown): value is RuntimeRoute {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -54,7 +35,7 @@ function isRoute(value: unknown): value is RuntimeRoute {
   )
 }
 
-function isMiddleware(value: unknown): value is RuntimeMiddleware {
+export function isMiddleware(value: unknown): value is RuntimeMiddleware {
   return (
     typeof value === 'object' &&
     value !== null &&
