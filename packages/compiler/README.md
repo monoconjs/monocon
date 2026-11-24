@@ -7,10 +7,10 @@ This package is bundled as a dependency of `monocon` and powers its `monocon` co
 ## Install
 
 ```sh
-npm install -D @monocon/compiler
+npm install -D @monocon/compiler typescript
 ```
 
-Requires Node.js 22 or later.
+Requires Node.js 22 or later and TypeScript 5.7 or later (before 6.0) as a peer dependency.
 
 ## Commands
 

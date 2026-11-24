@@ -179,6 +179,8 @@ monocon gen --watch [command...]  # regenerate on changes and restart the comman
 monocon build [command...] # compile sources to .monocon-dist for bundlers, then optionally run a command
 ```
 
+TypeScript 5.7 or later (before 6.0) is required by `@monocon/compiler` as a peer dependency.
+
 `gen` only emits declarations. `build` is a plain TypeScript compile step for bundlers; it does not inject a registry or alter `start()` calls.
 
 ## Packages
