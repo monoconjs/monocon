@@ -43,7 +43,7 @@ describe('defineGroup', () => {
       { meta: { scope: 'group', shared: 'group' } },
       { version: 1 },
     )
-    const route = asRuntime(api.get('/users', { meta: { shared: 'route', action: 'list' } }))
+    const route = asRuntime(api.get('/users', { shared: 'route', action: 'list' }))
 
     expect(route['~options'].meta).toEqual({
       scope: 'group',

@@ -32,8 +32,8 @@ describe('route factory', () => {
     expect(asRuntime(monocon.all('/x'))['~method']).toBe('ALL')
   })
 
-  it('stores path and options, defaulting options to empty', () => {
-    const withOptions = asRuntime(monocon.get('/users/:id', { meta: { auth: true } }))
+  it('stores path and meta, defaulting options to empty', () => {
+    const withOptions = asRuntime(monocon.get('/users/:id', { auth: true }))
 
     expect(withOptions['~path']).toBe('/users/:id')
     expect(withOptions['~options']).toEqual({ meta: { auth: true } })

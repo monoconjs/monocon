@@ -1,6 +1,6 @@
 import type { Merge, Simplify } from './_utils.ts'
 import type { RouteMethod } from './http.ts'
-import type { RouteBuilder, RouteMeta, RouteOptions, RouteState } from './route.ts'
+import type { MetaOptions, RouteBuilder, RouteMeta, RouteOptions, RouteState } from './route.ts'
 
 type TrimTrailingSlash<Path extends string> = Path extends `${infer Rest}/`
   ? TrimTrailingSlash<Rest>
@@ -35,12 +35,12 @@ export type GroupRouteFactory<
   Method extends RouteMethod,
   Prefix extends string,
   Options extends RouteOptions,
-> = <Path extends string, RouteOpts extends RouteOptions = {}>(
+> = <Path extends string, Meta extends RouteMeta = {}>(
   path: Path,
-  options?: RouteOpts,
+  meta?: Meta,
 ) => RouteBuilder<
   'onRequest',
-  RouteState<Method, JoinPath<Prefix, Path>, MergeGroupOptions<Options, RouteOpts>>
+  RouteState<Method, JoinPath<Prefix, Path>, MergeGroupOptions<Options, MetaOptions<Meta>>>
 >
 
 export interface RouteGroup<Prefix extends string, Options extends RouteOptions> {

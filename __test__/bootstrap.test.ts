@@ -64,9 +64,9 @@ describe('createFetchHandler', () => {
 
   it('converts ValidationError into a 400 response', async () => {
     const route = asRoute(
-      get('/users/:id', {
+      get('/users/:id').handle((ctx) => ({ id: ctx.params.id }), {
         params: z.object({ id: z.coerce.number() }),
-      }).handle((ctx) => ({ id: ctx.params.id })),
+      }),
     )
     const handler = createFetchHandler(createMatcher([route]), [])
 

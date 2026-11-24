@@ -7,19 +7,21 @@ type BuilderMethods<Value> = Exclude<keyof Value, `~${string}`>
 
 describe('route builder', () => {
   it('chains stages in order', () => {
-    const route = get('/users/:id', {
-      meta: { auth: true },
-      params: z.object({ id: z.coerce.number() }),
-      query: z.object({ page: z.coerce.number() }),
-    })
+    const route = get('/users/:id', { auth: true })
       .onRequest(() => ({ traceId: 'trace' }))
-      .beforeHandle((ctx) => {
-        expectTypeOf(ctx.traceId).toEqualTypeOf<string>()
-        expectTypeOf(ctx.params.id).toEqualTypeOf<number>()
-        expectTypeOf(ctx.query.page).toEqualTypeOf<number>()
+      .beforeHandle(
+        (ctx) => {
+          expectTypeOf(ctx.traceId).toEqualTypeOf<string>()
+          expectTypeOf(ctx.params.id).toEqualTypeOf<number>()
+          expectTypeOf(ctx.query.page).toEqualTypeOf<number>()
 
-        return { user: 'alice' }
-      })
+          return { user: 'alice' }
+        },
+        {
+          params: z.object({ id: z.coerce.number() }),
+          query: z.object({ page: z.coerce.number() }),
+        },
+      )
       .handle((ctx) => {
         expectTypeOf(ctx.traceId).toEqualTypeOf<string>()
         expectTypeOf(ctx.user).toEqualTypeOf<string>()
@@ -41,7 +43,7 @@ describe('route builder', () => {
 
   it('allows skipping stages', () => {
     get('/health').handle(() => 'ok')
-    get('/search', { query: z.object({ q: z.string() }) }).handle((ctx) => ctx.query.q)
+    get('/search').handle((ctx) => ctx.query.q, { query: z.object({ q: z.string() }) })
     get('/direct')
       .beforeHandle(() => {})
       .handle(() => 'ok')

@@ -1,7 +1,16 @@
 import type { RouteMethod } from './types/http.ts'
-import type { RouteBuilder, RouteFactory, RouteOptions, RouteState } from './types/route.ts'
+import type {
+  RouteBuilder,
+  RouteFactory,
+  RouteMeta,
+  RouteOptions,
+  RouteState,
+  SchemaOptions,
+} from './types/route.ts'
 
 export type RouteLifecycle = 'onRequest' | 'beforeHandle' | 'afterHandle' | 'onResponse' | 'onError'
+
+export type RouteValidationStage = 'onRequest' | 'beforeHandle' | 'handle'
 
 type Hook = (...args: any[]) => any
 
@@ -12,15 +21,26 @@ export interface RuntimeRoute {
   '~provided': object
   '~handler': Hook | undefined
   '~hooks': Record<RouteLifecycle, Hook[]>
+  '~validations': Record<RouteValidationStage, SchemaOptions>
 }
 
 interface Builder extends RuntimeRoute {
-  onRequest: (hook: Hook) => Builder
-  beforeHandle: (hook: Hook) => Builder
-  handle: (handler: Hook) => Builder
-  afterHandle: (hook: Hook) => Builder
-  onResponse: (hook: Hook) => Builder
+  onRequest: (hook: Hook, schemas?: SchemaOptions) => Builder
+  beforeHandle: (hook: Hook, schemas?: SchemaOptions) => Builder
+  handle: (handler: Hook, schemas?: SchemaOptions) => Builder
+  afterHandle: (hook: Hook, schemas?: SchemaOptions) => Builder
+  onResponse: (hook: Hook, schemas?: SchemaOptions) => Builder
   onError: (hook: Hook) => Builder
+}
+
+function pickSchemas(options: RouteOptions): SchemaOptions {
+  return {
+    ...(options.params === undefined ? {} : { params: options.params }),
+    ...(options.query === undefined ? {} : { query: options.query }),
+    ...(options.body === undefined ? {} : { body: options.body }),
+    ...(options.headers === undefined ? {} : { headers: options.headers }),
+    ...(options.response === undefined ? {} : { response: options.response }),
+  }
 }
 
 function createBuilder<
@@ -40,6 +60,12 @@ function createBuilder<
     onError: [],
   }
 
+  const validations: Record<RouteValidationStage, SchemaOptions> = {
+    onRequest: pickSchemas(options),
+    beforeHandle: {},
+    handle: {},
+  }
+
   const builder: Builder = {
     '~method': method,
     '~path': path,
@@ -47,16 +73,20 @@ function createBuilder<
     '~provided': {},
     '~handler': undefined,
     '~hooks': hooks,
-    onRequest(hook) {
+    '~validations': validations,
+    onRequest(hook, schemas) {
       hooks.onRequest.push(hook)
+      Object.assign(validations.onRequest, schemas)
       return builder
     },
-    beforeHandle(hook) {
+    beforeHandle(hook, schemas) {
       hooks.beforeHandle.push(hook)
+      Object.assign(validations.beforeHandle, schemas)
       return builder
     },
-    handle(handler) {
+    handle(handler, schemas) {
       builder['~handler'] = handler
+      Object.assign(validations.handle, schemas)
       return builder
     },
     afterHandle(hook) {
@@ -97,8 +127,11 @@ export function createRouteFactory<Method extends RouteMethod>(
   prefix = '',
   options: RouteOptions = {},
 ): RouteFactory<Method> {
-  return (path: string, routeOptions?: RouteOptions) =>
-    createBuilder(method, joinPath(prefix, path), mergeRouteOptions(options, routeOptions ?? {}))
+  const factory = (path: string, meta?: RouteMeta) =>
+    createBuilder(method, joinPath(prefix, path), mergeRouteOptions(options, meta ? { meta } : {}))
+
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return factory as unknown as RouteFactory<Method>
 }
 
 export const get: RouteFactory<'GET'> = createRouteFactory('GET')

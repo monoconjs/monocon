@@ -12,7 +12,7 @@ describe('defineGroup types', () => {
   it('carries prefix params and merged meta into the route context', () => {
     const users = defineGroup('/:tenantId/users', { meta: { scope: 'group' } }, { version: 1 })
 
-    users.get('/:id', { meta: { action: 'list' } }).handle((ctx) => {
+    users.get('/:id', { action: 'list' }).handle((ctx) => {
       expectTypeOf(ctx.params.tenantId).toEqualTypeOf<string>()
       expectTypeOf(ctx.params.id).toEqualTypeOf<string>()
       expectTypeOf(ctx.meta.scope).toEqualTypeOf<'group'>()
