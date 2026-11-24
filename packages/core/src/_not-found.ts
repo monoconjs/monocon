@@ -16,5 +16,10 @@ export function notFoundRoute(path: string): RuntimeRoute {
     '~provided': {},
     '~handler': () => new Response('Not Found', { status: 404 }),
     '~hooks': NOT_FOUND_HOOKS,
+    '~validations': {
+      onRequest: {},
+      beforeHandle: {},
+      handle: {},
+    },
   }
 }

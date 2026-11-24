@@ -61,13 +61,16 @@ describe('execute', () => {
 
   it('validates params and query, using parsed values in the handler', async () => {
     const route = asRoute(
-      get('/users/:id', {
-        params: z.object({ id: z.coerce.number() }),
-        query: z.object({ page: z.coerce.number() }),
-      }).handle((ctx) => ({
-        id: ctx.params.id,
-        page: ctx.query.page,
-      })),
+      get('/users/:id').handle(
+        (ctx) => ({
+          id: ctx.params.id,
+          page: ctx.query.page,
+        }),
+        {
+          params: z.object({ id: z.coerce.number() }),
+          query: z.object({ page: z.coerce.number() }),
+        },
+      ),
     )
 
     const response = await execute(route, request('/users/42?page=3'))
@@ -77,9 +80,9 @@ describe('execute', () => {
 
   it('returns a 400 response when a schema fails', async () => {
     const route = asRoute(
-      get('/users/:id', {
+      get('/users/:id').handle((ctx) => ({ id: ctx.params.id }), {
         params: z.object({ id: z.coerce.number() }),
-      }).handle((ctx) => ({ id: ctx.params.id })),
+      }),
     )
 
     const response = await execute(route, request('/users/abc'))
@@ -93,9 +96,9 @@ describe('execute', () => {
 
   it('parses a JSON body and validates it', async () => {
     const route = asRoute(
-      get('/users', {
+      get('/users').handle((ctx: { body: { name: string } }) => ({ name: ctx.body.name }), {
         body: z.object({ name: z.string() }),
-      }).handle((ctx: { body: { name: string } }) => ({ name: ctx.body.name })),
+      }),
     )
 
     const response = await execute(

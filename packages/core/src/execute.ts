@@ -8,7 +8,7 @@ import {
 import { NoHandlerError, ParseError, handleError } from './errors/index.ts'
 import type { RuntimeMiddleware } from './middleware.ts'
 import { matchMiddlewares } from './pattern.ts'
-import type { RouteLifecycle, RuntimeRoute } from './route.ts'
+import type { RouteLifecycle, RouteValidationStage, RuntimeRoute } from './route.ts'
 import type { ErrorStage } from './types/error.ts'
 import { validate } from './validation.ts'
 
@@ -32,35 +32,28 @@ export async function execute(
   let ctx: RuntimeContext | undefined
 
   try {
-    const rawParams = extractParams(route['~path'], url.pathname)
-    const params = await validate('params', optionsOf.params, rawParams)
-    const searchParams = parseQuery(url)
-    const query = await validate(
-      'query',
-      optionsOf.query,
-      optionsOf.query ? Object.fromEntries(searchParams) : searchParams,
-    )
-    const parsedBody = options.skipBody
-      ? undefined
-      : await parseBody(request).catch((cause: unknown) => {
-          throw ParseError({ message: cause instanceof Error ? cause.message : String(cause) })
-        })
-    const body = await validate('body', optionsOf.body, parsedBody)
-    const headers = await validate(
-      'headers',
-      optionsOf.headers,
-      Object.fromEntries(request.headers),
-    )
+    const raw: RawValues = {
+      params: extractParams(route['~path'], url.pathname),
+      query: parseQuery(url),
+      body: options.skipBody
+        ? undefined
+        : await parseBody(request).catch((cause: unknown) => {
+            throw ParseError({ message: cause instanceof Error ? cause.message : String(cause) })
+          }),
+      headers: Object.fromEntries(request.headers),
+    }
 
     ctx = createContext({
       req: request,
       url,
-      params: isProvided(params) ? params : rawParams,
-      query,
-      body,
+      params: raw.params,
+      query: raw.query,
+      body: raw.body,
       meta: optionsOf.meta ?? {},
     })
-    if (isProvided(headers)) Object.assign(ctx.headers, headers)
+
+    stage = 'validation'
+    await applyValidation(route, 'onRequest', ctx, raw)
 
     const handler = route['~handler']
     if (!handler) {
@@ -77,6 +70,9 @@ export async function execute(
       return finalize(shortCircuit, ctx, route, middlewares)
     }
 
+    stage = 'validation'
+    await applyValidation(route, 'beforeHandle', ctx, raw)
+
     stage = 'beforeHandle'
     const beforeResult = await runBeforeHooks(
       [...middlewareHooks(middlewares, 'beforeHandle'), ...route['~hooks'].beforeHandle],
@@ -86,6 +82,9 @@ export async function execute(
       stage = 'onResponse'
       return finalize(beforeResult, ctx, route, middlewares)
     }
+
+    stage = 'validation'
+    await applyValidation(route, 'handle', ctx, raw)
 
     stage = 'handle'
     const handled = await handler(ctx)
@@ -123,6 +122,38 @@ async function finalize(
     ctx,
     response,
   )
+}
+
+interface RawValues {
+  readonly params: Record<string, unknown>
+  readonly query: URLSearchParams
+  readonly body: unknown
+  readonly headers: Record<string, string>
+}
+
+async function applyValidation(
+  route: RuntimeRoute,
+  stage: RouteValidationStage,
+  ctx: RuntimeContext,
+  raw: RawValues,
+): Promise<void> {
+  const schemas = route['~validations'][stage]
+
+  const params = await validate('params', schemas.params, raw.params)
+  const query = await validate(
+    'query',
+    schemas.query,
+    schemas.query ? Object.fromEntries(raw.query) : raw.query,
+  )
+  const body = await validate('body', schemas.body, raw.body)
+  const headers = await validate('headers', schemas.headers, raw.headers)
+
+  const values: Record<string, unknown> = {}
+  if (schemas.params) values.params = isProvided(params) ? params : raw.params
+  if (schemas.query) values.query = query
+  if (schemas.body) values.body = body
+  if (Object.keys(values).length > 0) Object.assign(ctx, values)
+  if (isProvided(headers)) Object.assign(ctx.headers, headers)
 }
 
 async function runBeforeHooks(hooks: Hook[], ctx: RuntimeContext): Promise<Response | undefined> {

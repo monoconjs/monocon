@@ -7,12 +7,19 @@ import type { InferOutput, Schema } from './schema.ts'
 
 export type RouteMeta = Record<string, unknown>
 
-export interface RouteOptions {
+export interface SchemaOptions {
   params?: Schema
   query?: Schema
   body?: Schema
   headers?: Schema
   response?: Schema
+}
+
+export interface ResponseSchemaOptions {
+  response?: Schema
+}
+
+export interface RouteOptions extends SchemaOptions {
   meta?: RouteMeta
 }
 
@@ -48,6 +55,33 @@ export type PathParams<Path extends string> = Simplify<SegmentsToParams<SplitPat
 type AsObject<Value> = Value extends object ? Value : {}
 
 type OptionsOf<State extends RouteState> = State['~options']
+
+type MergeStageOptions<Old extends RouteOptions, Next extends SchemaOptions> = Simplify<
+  Omit<Old, keyof Next | 'response'> &
+    Omit<Next, 'response'> &
+    ('response' extends keyof Old
+      ? Pick<Old, 'response'>
+      : 'response' extends keyof Next
+        ? Pick<Next, 'response'>
+        : {})
+>
+
+type WithStageState<State extends RouteState, Schemas extends SchemaOptions> = RouteState<
+  State['~method'],
+  State['~path'],
+  MergeStageOptions<OptionsOf<State>, Schemas>,
+  State['~provided']
+>
+
+type WithHookSchemas<State extends RouteState, Schemas extends SchemaOptions, Fn> = RouteState<
+  State['~method'],
+  State['~path'],
+  OptionsOf<WithStageState<State, Schemas>>,
+  State['~provided'] & ProvidedOfHook<Fn>
+>
+
+type ResponseOnly<Schemas extends ResponseSchemaOptions> = Schemas &
+  Record<Exclude<keyof Schemas, 'response'>, never>
 
 type ParamsOf<Path extends string, Options> = Options extends {
   params: infer Parsed extends Schema
@@ -130,33 +164,55 @@ export type RouteStage = 'onRequest' | 'beforeHandle' | 'handle' | 'afterHandle'
 
 type FinalStage = 'handle' | 'afterHandle' | 'onResponse'
 
-type WithProvided<State extends RouteState, Fn> = RouteState<
-  State['~method'],
-  State['~path'],
-  OptionsOf<State>,
-  State['~provided'] & ProvidedOfHook<Fn>
->
-
 interface RouteMethods<State extends RouteState> {
-  onRequest: <Fn extends RouteHook<State>>(
+  onRequest: <
+    Schemas extends SchemaOptions = {},
+    Fn extends RouteHook<WithStageState<State, Schemas>> = RouteHook<
+      WithStageState<State, Schemas>
+    >,
+  >(
     hook: Fn,
-  ) => RouteBuilder<'onRequest', WithProvided<State, Fn>>
+    schemas?: Schemas,
+  ) => RouteBuilder<'onRequest', WithHookSchemas<State, Schemas, Fn>>
 
-  beforeHandle: <Fn extends RouteHook<State>>(
+  beforeHandle: <
+    Schemas extends SchemaOptions = {},
+    Fn extends RouteHook<WithStageState<State, Schemas>> = RouteHook<
+      WithStageState<State, Schemas>
+    >,
+  >(
     hook: Fn,
-  ) => RouteBuilder<'beforeHandle', WithProvided<State, Fn>>
+    schemas?: Schemas,
+  ) => RouteBuilder<'beforeHandle', WithHookSchemas<State, Schemas, Fn>>
 
-  handle: (
-    handler: RouteHandler<State>,
-  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided']>
+  handle: <Schemas extends SchemaOptions = {}>(
+    handler: RouteHandler<WithStageState<State, Schemas>>,
+    schemas?: Schemas,
+  ) => Route<
+    State['~method'],
+    State['~path'],
+    OptionsOf<WithStageState<State, Schemas>>,
+    State['~provided']
+  >
 
-  afterHandle: <Result extends ResponseOutput<OptionsOf<State>> | Response>(
-    hook: (ctx: RouteContext<State>, result: Result) => MaybePromise<Result | void>,
-  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided'], 'afterHandle'>
+  afterHandle: <
+    Schemas extends ResponseSchemaOptions = {},
+    Next extends RouteState = WithStageState<State, Schemas>,
+    Result extends ResponseOutput<OptionsOf<Next>> | Response =
+      | ResponseOutput<OptionsOf<Next>>
+      | Response,
+  >(
+    hook: (ctx: RouteContext<Next>, result: Result) => MaybePromise<Result | void>,
+    schemas?: ResponseOnly<Schemas>,
+  ) => Route<State['~method'], State['~path'], OptionsOf<Next>, State['~provided'], 'afterHandle'>
 
-  onResponse: (
-    hook: RouteResponseHook<State>,
-  ) => Route<State['~method'], State['~path'], OptionsOf<State>, State['~provided'], 'onResponse'>
+  onResponse: <
+    Schemas extends ResponseSchemaOptions = {},
+    Next extends RouteState = WithStageState<State, Schemas>,
+  >(
+    hook: (ctx: RouteContext<Next>, response: Response) => MaybePromise<Response | void>,
+    schemas?: ResponseOnly<Schemas>,
+  ) => Route<State['~method'], State['~path'], OptionsOf<Next>, State['~provided'], 'onResponse'>
 
   onError: (
     hook: RouteErrorHook<State>,
@@ -186,10 +242,12 @@ export type Route<
   '~handler': RouteHandler<RouteState<Method, Path, Options, Provided>>
 } & Pick<RouteMethods<RouteState<Method, Path, Options, Provided>>, AvailableMethods<Stage>>
 
+export type MetaOptions<Meta extends RouteMeta> = keyof Meta extends never ? {} : { meta: Meta }
+
 export type RouteFactory<Method extends RouteMethod> = <
   Path extends string,
-  Options extends RouteOptions = {},
+  Meta extends RouteMeta = {},
 >(
   path: Path,
-  options?: Options,
-) => RouteBuilder<'onRequest', RouteState<Method, Path, Options>>
+  meta?: Meta,
+) => RouteBuilder<'onRequest', RouteState<Method, Path, MetaOptions<Meta>>>

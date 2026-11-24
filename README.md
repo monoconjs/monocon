@@ -21,10 +21,10 @@ Define routes and middleware, export them in ordered arrays, then pass everythin
 import { get } from 'monocon'
 import { z } from 'zod'
 
-export const getUser = get('/users/:id', {
+export const getUser = get('/users/:id').handle((ctx) => ({ id: ctx.params.id, name: 'Ada' }), {
   params: z.object({ id: z.coerce.number() }),
   response: z.object({ id: z.number(), name: z.string() }),
-}).handle((ctx) => ({ id: ctx.params.id, name: 'Ada' }))
+})
 ```
 
 ```ts
@@ -64,39 +64,47 @@ The compiler only writes declarations under `.monocon/`: `types.d.ts` imports `m
 
 ## Routes
 
-Use `get`, `post`, `put`, `patch`, `del`, `head`, `options`, or `all` to declare a route. Options are validated with Zod schemas for `params`, `query`, `body`, and `response`.
+Use `get`, `post`, `put`, `patch`, `del`, `head`, `options`, or `all` to declare a route. The second argument is route meta. Schemas are declared on lifecycle hooks instead: pass `params`, `query`, `body`, or `headers` as the hook's second argument to validate before that stage runs. `response` is type-only and is never validated at runtime.
 
 ```ts
 import { post } from 'monocon'
 import { z } from 'zod'
 
-export const createUser = post('/users', {
-  body: z.object({ name: z.string() }),
-  response: z.object({ id: z.number(), name: z.string() }),
-  meta: { tags: ['Users'] },
-}).handle((ctx) => ({ id: 1, name: ctx.body.name }))
+export const createUser = post('/users', { tags: ['Users'] }).handle(
+  (ctx) => ({ id: 1, name: ctx.body.name }),
+  {
+    body: z.object({ name: z.string() }),
+    response: z.object({ id: z.number(), name: z.string() }),
+  },
+)
 ```
 
 Each route is a chain of lifecycle hooks:
 
-- `onRequest(ctx)` — runs first; its return value is added to the context.
-- `beforeHandle(ctx)` — runs before the handler; its return value is added to the context.
-- `handle(ctx)` — the route handler (required); its return value is the response body.
-- `afterHandle(ctx, result)` — transforms the handler result.
-- `onResponse(ctx, response)` — transforms the final response.
+- `onRequest(ctx, schemas?)` — runs first; its return value is added to the context.
+- `beforeHandle(ctx, schemas?)` — runs before the handler; its return value is added to the context.
+- `handle(ctx, schemas?)` — the route handler (required); its return value is the response body.
+- `afterHandle(ctx, result, schemas?)` — transforms the handler result; only `response` is allowed.
+- `onResponse(ctx, response, schemas?)` — transforms the final response; only `response` is allowed.
+
+Schemas accumulate forward: later stages see the schemas declared by earlier stages. If `response` is declared more than once, the first declaration wins.
 
 ```ts
 const tracked = get('/users/:id')
-  .onRequest(() => ({ traceId: 'trace-1' }))
+  .onRequest(() => ({ traceId: 'trace-1' }), {
+    headers: z.object({ authorization: z.string() }),
+  })
   .beforeHandle((ctx) => ({ requestedBy: ctx.traceId }))
-  .handle((ctx) => ({ requestedBy: ctx.requestedBy }))
+  .handle((ctx) => ({ requestedBy: ctx.requestedBy }), {
+    params: z.object({ id: z.coerce.number() }),
+  })
   .afterHandle((_ctx, result) => result)
   .onResponse((_ctx, response) => response)
 ```
 
 ## Route groups
 
-Use `defineGroup(prefix, options?, meta?)` to share a path prefix, options, and meta across routes. Group methods behave like the top-level route factories and produce normal routes with the prefixed path.
+Use `defineGroup(prefix, options?, meta?)` to share a path prefix, options, and meta across routes. Group methods behave like the top-level route factories: their second argument is route meta, and schemas are declared on lifecycle hooks.
 
 ```ts
 import { defineGroup } from 'monocon'
@@ -107,7 +115,7 @@ export const getUser = users.get('/:id').handle((ctx) => ({ id: ctx.params.id })
 export const listUsers = users.get('/').handle(() => [])
 ```
 
-Groups can be nested, and route-level options override group-level options. The compiler generates declarations using the final prefixed paths, so middleware context and route records stay in sync.
+Groups can be nested, and route-level meta is merged over group-level meta. The compiler generates declarations using the final prefixed paths, so middleware context and route records stay in sync.
 
 ## Middleware
 
