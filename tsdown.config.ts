@@ -17,15 +17,7 @@ function formatDist() {
 }
 
 export default defineConfig({
-  entry: [
-    'src/index.ts',
-    'src/global.ts',
-    'src/config.ts',
-    'src/adapters/node.ts',
-    'src/adapters/bun.ts',
-    'src/adapters/deno.ts',
-    'src/adapters/workers.ts',
-  ],
+  entry: ['src/index.ts'],
   outDir,
   format: ['esm', 'cjs'],
   platform: 'node',
