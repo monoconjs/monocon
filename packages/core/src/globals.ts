@@ -1,6 +1,9 @@
+import type { Meta as CoreMeta } from './types/meta.ts'
 import type { RouteBuilder } from './types/route.ts'
 
 declare global {
+  type Meta = CoreMeta
+
   const get: RouteBuilder
   const post: RouteBuilder
   const put: RouteBuilder

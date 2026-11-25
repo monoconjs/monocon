@@ -1,8 +1,8 @@
-import type { ModuleMeta } from './meta.ts'
+import type { Meta } from './meta.ts'
 import type { RouteDefinition } from './route.ts'
 
-export interface ModuleDefinition<Meta extends ModuleMeta = ModuleMeta, Injects = {}> {
-  META: Meta
+export interface ModuleDefinition<ModuleMeta extends Meta = Meta, Injects = {}> {
+  META: ModuleMeta
   INJECTS: Injects
   routes: RouteDefinition[]
 }

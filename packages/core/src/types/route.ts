@@ -2,11 +2,9 @@ import type { MaybePromise, Merge } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 import type { RouteMethod } from './http.ts'
 import type { InjectContext } from './inject.ts'
-import type { MetaPrefix, ModuleMeta } from './meta.ts'
+import type { Meta, MetaPrefix, RouteMeta } from './meta.ts'
 import type { PathParams } from './path.ts'
 import type { InferOutput, Schema } from './schema.ts'
-
-export type RouteMeta = Record<string, unknown>
 
 export interface SchemaOptions {
   params?: Schema
@@ -53,7 +51,7 @@ type BodyOf<Options> = Options extends { body: infer Parsed extends Schema }
   ? InferOutput<Parsed>
   : unknown
 
-type MetaOf<Options> = Options extends { meta: infer Meta extends object } ? Meta : {}
+type MetaOf<Options> = Options extends { meta: infer Value extends object } ? Value : {}
 
 type ResponseOutput<Options> = Options extends { response: infer Parsed extends Schema }
   ? InferOutput<Parsed>
@@ -89,7 +87,7 @@ export interface RouteDefinition<Path extends string = string, Result = unknown>
   options: Record<string, unknown>
 }
 
-export interface RouteBuilder<Meta extends ModuleMeta = ModuleMeta, Injects = {}> {
+export interface RouteBuilder<M extends Meta = Meta, Injects = {}> {
   <
     Path extends string,
     Options extends RouteOptions<Injects>,
@@ -98,5 +96,5 @@ export interface RouteBuilder<Meta extends ModuleMeta = ModuleMeta, Injects = {}
     path: Path,
     handler: (ctx: RouteContext<Path, Injects, Options>) => MaybePromise<Result>,
     options?: Options,
-  ): RouteDefinition<`${MetaPrefix<Meta>}${Path}`, Result>
+  ): RouteDefinition<`${MetaPrefix<M>}${Path}`, Result>
 }

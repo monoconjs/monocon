@@ -1,10 +1,12 @@
 import type {
   Context,
   InjectContext,
+  Meta,
   MetaPrefix,
   PathParams,
   ProvidedOfHook,
   RouteBuilder,
+  RouteMeta,
 } from '@monocon/core'
 import { z } from 'zod'
 
@@ -27,9 +29,13 @@ describe('core types', () => {
     expectTypeOf<PathParams<'/files/*'>>().toEqualTypeOf<{ wildcard: string }>()
   })
 
-  it('infers meta prefix', () => {
+  it('infers meta types', () => {
+    expectTypeOf<Meta['prefix']>().toEqualTypeOf<string | undefined>()
     expectTypeOf<MetaPrefix<{ prefix: '/api' }>>().toEqualTypeOf<'/api'>()
     expectTypeOf<MetaPrefix<{}>>().toEqualTypeOf<''>()
+    expectTypeOf<RouteMeta<{ prefix: '/api'; summary: string }>>().toEqualTypeOf<{
+      summary: string
+    }>()
   })
 
   it('infers hook-provided context', () => {
@@ -49,10 +55,11 @@ describe('core types', () => {
         expectTypeOf(ctx.url).toEqualTypeOf<URL>()
         expectTypeOf(ctx.params.id).toEqualTypeOf<string>()
         expectTypeOf(ctx.user).toEqualTypeOf<string>()
+        expectTypeOf(ctx.meta).toEqualTypeOf<{ tag: string }>()
         expectTypeOf(ctx.json({ ok: true })).toEqualTypeOf<Response>()
         return { ok: true }
       },
-      { query: z.object({ page: z.coerce.number() }) },
+      { query: z.object({ page: z.coerce.number() }), meta: { tag: 'user' } },
     )
 
     expectTypeOf(route.path).toEqualTypeOf<'/api/users/:id'>()
