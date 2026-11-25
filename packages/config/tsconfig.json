@@ -24,8 +24,7 @@
     "noEmit": true,
     "paths": {
       "@monocon/config": ["./index.ts"],
-      "@monocon/core": ["../core/src/index.ts"],
-      "@monocon/core/globals": ["../core/src/globals.ts"]
+      "@monocon/core": ["../core/src/index.ts"]
     }
   }
 }

@@ -4,12 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "generate": "node scripts/generate.mts",
+    "generate": "monocon monocon.config.ts",
     "typecheck": "pnpm generate && tsc --noEmit"
   },
   "dependencies": {
-    "@monocon/compiler": "workspace:*",
-    "@monocon/core": "workspace:*",
+    "monocon": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {

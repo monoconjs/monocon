@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const META = {
   prefix: '/api/posts',
   summary: 'Post routes',
-} as const
+} as const satisfies Meta
 
 export const listPosts = get(
   '/',

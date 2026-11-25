@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const META = {
   prefix: '/api/users',
   summary: 'User routes',
-} as const
+} as const satisfies Meta
 
 export const INJECTS = {
   tenant: {
