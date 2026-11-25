@@ -46,7 +46,7 @@ jobs:
       - run: pnpm exec attw --pack packages/adapter --profile esm-only
 
       - name: Publish core, compiler and adapter
-        run: pnpm --filter "@monocon/*" publish --access public --provenance --no-git-checks
+        run: pnpm --filter "@monocon/*" --filter "!@monocon/config" publish --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
