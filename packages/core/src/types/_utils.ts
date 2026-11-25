@@ -1,0 +1,35 @@
+export type MaybePromise<T> = T | Promise<T>
+
+export type Simplify<T> = { [Key in keyof T]: T[Key] } & {}
+
+export type Merge<Base, Override> = Simplify<Omit<Base, keyof Override> & Override>
+
+export type UnionToIntersection<Union> = (
+  Union extends unknown ? (value: Union) => void : never
+) extends (value: infer Result) => void
+  ? Result
+  : never
+
+export type ProvidedOfHook<Fn> = Fn extends (...args: any[]) => infer Result
+  ? Exclude<Awaited<Result>, Response | void | null | undefined> extends infer Provided
+    ? [Provided] extends [never]
+      ? {}
+      : Provided extends object
+        ? [keyof Provided] extends [never]
+          ? {}
+          : Provided
+        : {}
+    : {}
+  : {}
+
+export type HasRequiredKey<T> = keyof T extends never
+  ? false
+  : {
+        [K in keyof T]-?: {} extends Pick<T, K> ? never : K
+      }[keyof T] extends never
+    ? false
+    : true
+
+export type OmitIndexSignature<T> = {
+  [K in keyof T as {} extends Record<K, never> ? never : K]: T[K]
+}
