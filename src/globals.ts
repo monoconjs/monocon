@@ -1,8 +1,9 @@
-import type { Meta as CoreMeta } from './types/meta.ts'
-import type { RouteBuilder } from './types/route.ts'
+import type { Meta as CoreMeta, RouteBuilder } from '@monocon/core'
+
+type BaseMeta = CoreMeta
 
 declare global {
-  type Meta = CoreMeta
+  interface Meta extends BaseMeta {}
 
   const get: RouteBuilder
   const post: RouteBuilder
