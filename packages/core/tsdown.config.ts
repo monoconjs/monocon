@@ -1,3 +1,5 @@
 import { defineTsdown } from '@monocon/config'
 
-export default defineTsdown()
+export default defineTsdown({
+  entry: ['src/index.ts', 'src/globals.ts'],
+})
