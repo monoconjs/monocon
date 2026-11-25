@@ -1,7 +1,8 @@
-export interface ModuleMeta {
+export interface Meta {
   prefix?: string
-  summary?: string
-  [key: string]: unknown
+  [Key: string]: any
 }
 
-export type MetaPrefix<Meta> = Meta extends { prefix: infer Prefix extends string } ? Prefix : ''
+export type RouteMeta<Module extends Meta = Meta> = Omit<Module, 'prefix'>
+
+export type MetaPrefix<M> = M extends { prefix: infer Prefix extends string } ? Prefix : ''
