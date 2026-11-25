@@ -45,7 +45,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm --filter @monocon/core build",
+    "build": "pnpm --filter @monocon/core build && pnpm --filter @monocon/compiler build",
     "check:package": "publint && attw --pack .",
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
     "test": "vitest",
@@ -55,7 +55,9 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "dev": "pnpm --filter playground dev",
+    "dev": "pnpm --filter @monocon/playground generate",
+    "playground:generate": "pnpm --filter @monocon/playground generate",
+    "playground:typecheck": "pnpm --filter @monocon/playground typecheck",
     "prepare": "husky"
   },
   "dependencies": {
