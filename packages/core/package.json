@@ -23,16 +23,6 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    },
-    "./global": {
-      "import": {
-        "types": "./dist/global.d.mts",
-        "default": "./dist/global.mjs"
-      },
-      "require": {
-        "types": "./dist/global.d.cts",
-        "default": "./dist/global.cjs"
-      }
     }
   },
   "scripts": {
