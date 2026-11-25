@@ -30,26 +30,7 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.cts",
   "typesVersions": {
-    "*": {
-      "global": [
-        "./dist/global.d.mts"
-      ],
-      "config": [
-        "./dist/config.d.mts"
-      ],
-      "node": [
-        "./dist/adapters/node.d.mts"
-      ],
-      "bun": [
-        "./dist/adapters/bun.d.mts"
-      ],
-      "deno": [
-        "./dist/adapters/deno.d.mts"
-      ],
-      "workers": [
-        "./dist/adapters/workers.d.mts"
-      ]
-    }
+    "*": {}
   },
   "exports": {
     ".": {
@@ -78,13 +59,12 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@monocon/adapter": "workspace:*",
-    "@monocon/compiler": "workspace:*",
     "@monocon/core": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
+    "@monocon/config": "workspace:*",
     "@types/node": "^26.6.3",
     "@vitest/coverage-v8": "5.0.3",
     "husky": "^9.1.7",
