@@ -76,7 +76,7 @@ export async function analyzeSources(files: string[], rootDir: string): Promise<
     .filter((module) => module.hasGlobalInject)
   if (globalModules.length > 1) {
     throw new Error(
-      `Multiple global INJECTS found: ${globalModules.map((module) => module.file).join(', ')}`,
+      `Multiple global INJECTS found:\n${globalModules.map((module) => `  - ${module.file}`).join('\n')}\n`,
     )
   }
 
@@ -193,7 +193,7 @@ function hasGlobalFlag(expression: ts.Expression): boolean {
     (property) =>
       ts.isPropertyAssignment(property) &&
       propertyName(property.name) === '__global' &&
-      property.initializer.kind === ts.SyntaxKind.TrueKeyword,
+      unwrapExpression(property.initializer).kind === ts.SyntaxKind.TrueKeyword,
   )
 }
 
