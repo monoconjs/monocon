@@ -1,6 +1,7 @@
 import type { output as ZodOutput, ZodType } from 'zod'
 
-import type { MaybePromise } from './_utils.ts'
+import type { MaybePromise, Merge } from './_utils.ts'
+import type { Context, JsonValue } from './context.ts'
 
 export interface StandardSchemaIssue {
   readonly message: string
@@ -26,3 +27,56 @@ export type InferOutput<SchemaInput> = SchemaInput extends ZodType
   : SchemaInput extends StandardSchema<infer Output>
     ? Output
     : unknown
+
+export interface SchemaOptions {
+  params?: Schema
+  query?: Schema
+  body?: Schema
+  headers?: Schema
+  response?: Schema
+}
+
+type AsObject<Value> = Value extends object ? Value : {}
+
+export type ParamsOf<Options, Base extends object = Record<string, string>> = Options extends {
+  params: infer Parsed extends Schema
+}
+  ? Merge<Base, AsObject<InferOutput<Parsed>>>
+  : Base
+
+export type QueryOf<Options> = Options extends { query: infer Parsed extends Schema }
+  ? InferOutput<Parsed>
+  : URLSearchParams
+
+export type BodyOf<Options> = Options extends { body: infer Parsed extends Schema }
+  ? InferOutput<Parsed>
+  : unknown
+
+export type ResponseOutput<Options> = Options extends {
+  response: infer Parsed extends Schema
+}
+  ? InferOutput<Parsed>
+  : JsonValue
+
+export type HeadersOf<Options> = Options extends { headers: infer Parsed extends Schema }
+  ? Headers & AsObject<InferOutput<Parsed>>
+  : Headers
+
+export type HeaderNamesOf<Options> = Options extends { headers: infer Parsed extends Schema }
+  ? keyof AsObject<InferOutput<Parsed>> & string
+  : string
+
+export type SchemaContext<
+  Options,
+  Extras extends object = {},
+  Params extends object = Record<string, string>,
+> = Context<
+  Extras,
+  ParamsOf<Options, Params>,
+  QueryOf<Options>,
+  BodyOf<Options>,
+  Record<string, never>,
+  ResponseOutput<Options>,
+  HeadersOf<Options>,
+  HeaderNamesOf<Options>
+>
