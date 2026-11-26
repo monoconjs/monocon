@@ -82,6 +82,21 @@ export const helper = () => get('/ignored', () => ({}))`,
     ])
   })
 
+  it('reads prefixes from meta helper calls', async () => {
+    const root = await createProject({
+      'src/routes/users.ts': `export const META = meta({ prefix: '/api/users' })
+export const getUser = get('/:id', () => ({}))`,
+    })
+    const file = join(root, 'src/routes/users.ts')
+
+    const result = await analyzeSources([file], root)
+
+    expect(result.modules[0]?.hasMeta).toBe(true)
+    expect(result.routes).toEqual([
+      { file, name: 'getUser', method: 'get', path: '/api/users/:id' },
+    ])
+  })
+
   it('rejects multiple global inject sources with wrapped flags', async () => {
     const root = await createProject({
       'src/a.ts': 'export const INJECTS = { __global: true as const }',

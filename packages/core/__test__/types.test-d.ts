@@ -8,7 +8,7 @@ import type {
   RouteBuilder,
   RouteMeta,
 } from '@monocon/core'
-import { inject, provide } from '@monocon/core'
+import { inject, meta, provide } from '@monocon/core'
 import { z } from 'zod'
 
 const auth = {
@@ -43,6 +43,13 @@ describe('core types', () => {
     expectTypeOf<RouteMeta<{ prefix: '/api'; summary: string }>>().toEqualTypeOf<{
       summary: string
     }>()
+  })
+
+  it('creates meta definitions with inferred literals', () => {
+    const value = meta({ prefix: '/api/users', summary: 'User routes' })
+
+    expectTypeOf<MetaPrefix<typeof value>>().toEqualTypeOf<'/api/users'>()
+    expectTypeOf<RouteMeta<typeof value>>().toEqualTypeOf<{ readonly summary: 'User routes' }>()
   })
 
   it('infers hook-provided context', () => {
