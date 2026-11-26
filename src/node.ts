@@ -1,1 +1,1 @@
-export * from '@monocon/core/node'
+export * from '@monocon/adapter/node'

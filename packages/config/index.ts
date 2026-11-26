@@ -50,6 +50,9 @@ export function defineVitest(config: ViteUserConfig = {}): ViteUserConfig {
       resolve: {
         alias: {
           '@monocon/core': resolve(rootDir, 'packages/core/src/index.ts'),
+          '@monocon/adapter/node': resolve(rootDir, 'packages/adapter/src/node.ts'),
+          '@monocon/adapter/bun': resolve(rootDir, 'packages/adapter/src/bun.ts'),
+          '@monocon/adapter': resolve(rootDir, 'packages/adapter/src/index.ts'),
         },
       },
       test: {

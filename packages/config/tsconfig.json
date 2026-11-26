@@ -25,7 +25,9 @@
     "paths": {
       "@monocon/config": ["./index.ts"],
       "@monocon/core": ["../core/src/index.ts"],
-      "@monocon/core/node": ["../core/src/node.ts"]
+      "@monocon/adapter": ["../adapter/src/index.ts"],
+      "@monocon/adapter/node": ["../adapter/src/node.ts"],
+      "@monocon/adapter/bun": ["../adapter/src/bun.ts"]
     }
   }
 }
