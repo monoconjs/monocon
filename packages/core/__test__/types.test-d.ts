@@ -113,6 +113,47 @@ describe('core types', () => {
     expectTypeOf<InjectContext<{ factory: typeof factory }>>().toEqualTypeOf<{ user: string }>()
   })
 
+  it('infers provider schemas in route context', () => {
+    const provider = provide({
+      schema: {
+        headers: z.object({ authorization: z.string() }),
+        query: z.object({ page: z.coerce.number() }),
+        response: z.object({ ok: z.boolean() }),
+      },
+      beforeHandle: () => ({ user: 'admin' }),
+    })
+
+    const secureGet = undefined as unknown as RouteBuilder<{}, { provider: typeof provider }>
+
+    secureGet('/secure', (ctx) => {
+      expectTypeOf(ctx.headers.authorization).toEqualTypeOf<string>()
+      expectTypeOf(ctx.query.page).toEqualTypeOf<number>()
+      expectTypeOf(ctx.user).toEqualTypeOf<string>()
+      // @ts-expect-error response must match the provider response schema
+      ctx.json({ ok: 'yes' })
+      return ctx.json({ ok: true })
+    })
+
+    secureGet(
+      '/public',
+      (ctx) => {
+        expectTypeOf(ctx.headers).toEqualTypeOf<Headers>()
+        return { ok: true }
+      },
+      { provider: false },
+    )
+
+    secureGet(
+      '/override',
+      (ctx) => {
+        expectTypeOf(ctx.headers['x-tenant']).toEqualTypeOf<string>()
+        expectTypeOf(ctx.headers).not.toHaveProperty('authorization')
+        return { ok: true }
+      },
+      { headers: z.object({ 'x-tenant': z.string() }) },
+    )
+  })
+
   it('creates type-safe inject registries', () => {
     const registry = inject({
       __global: true,
@@ -165,6 +206,14 @@ describe('core types', () => {
       },
       { body: z.object({ name: z.string() }) },
     )
+  })
+
+  it('rejects unknown route options', () => {
+    // @ts-expect-error unknown option keys are not allowed
+    get('/unknown-option', () => ({ ok: true }), { unknownKey: 1 })
+
+    // @ts-expect-error unknown inject names are not allowed
+    get('/unknown-inject', () => ({ ok: true }), { missing: false })
   })
 
   it('allows disabling a provider', () => {

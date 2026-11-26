@@ -1,9 +1,10 @@
-import type { MaybePromise } from './_utils.ts'
+import type { Exact, MaybePromise, Merge, UnionToIntersection } from './_utils.ts'
 import type { Context } from './context.ts'
 import type { RouteMethod } from './http.ts'
 import type { InjectContext } from './inject.ts'
 import type { Meta, MetaPrefix, RouteMeta } from './meta.ts'
 import type { PathParams } from './path.ts'
+import type { SchemaOptionsOf } from './provide.ts'
 import type {
   BodyOf,
   HeaderNamesOf,
@@ -39,20 +40,34 @@ export type EnabledContext<Injects, Options> = InjectContext<
   Pick<Injects, EnabledInjectKeys<Injects, Options>>
 >
 
+type EnabledSchema<Injects, Options> = UnionToIntersection<
+  {
+    [Key in EnabledInjectKeys<Injects, Options>]: SchemaOptionsOf<Injects[Key]>
+  }[EnabledInjectKeys<Injects, Options>]
+>
+
+export type RouteSchema<Injects, Options> = Merge<
+  EnabledSchema<Injects, Options>,
+  Pick<Options, Extract<keyof SchemaOptions, keyof Options>>
+>
+
 type MetaOf<Options> = Options extends { meta: infer Value extends object } ? Value : {}
 
 export type RouteContext<Path extends string, Injects, Options> = Context<
   EnabledContext<Injects, Options>,
-  ParamsOf<Options, PathParams<Path>>,
-  QueryOf<Options>,
-  BodyOf<Options>,
+  ParamsOf<RouteSchema<Injects, Options>, PathParams<Path>>,
+  QueryOf<RouteSchema<Injects, Options>>,
+  BodyOf<RouteSchema<Injects, Options>>,
   MetaOf<Options>,
-  ResponseOutput<Options>,
-  HeadersOf<Options>,
-  HeaderNamesOf<Options>
+  ResponseOutput<RouteSchema<Injects, Options>>,
+  HeadersOf<RouteSchema<Injects, Options>>,
+  HeaderNamesOf<RouteSchema<Injects, Options>>
 >
 
-export type RouteResult<Options> = Response | ResponseOutput<Options> | void
+export type RouteResult<Injects, Options> =
+  | Response
+  | ResponseOutput<RouteSchema<Injects, Options>>
+  | void
 
 export interface RouteDefinition<Path extends string = string, Result = unknown> {
   method: RouteMethod
@@ -64,11 +79,11 @@ export interface RouteDefinition<Path extends string = string, Result = unknown>
 export interface RouteBuilder<M extends Meta = Meta, Injects = {}> {
   <
     Path extends string,
-    Options extends RouteOptions<Injects>,
-    Result extends RouteResult<Options> = RouteResult<Options>,
+    Options extends RouteOptions<Injects> | undefined = RouteOptions<Injects> | undefined,
+    Result extends RouteResult<Injects, Options> = RouteResult<Injects, Options>,
   >(
     path: Path,
     handler: (ctx: RouteContext<Path, Injects, Options>) => MaybePromise<Result>,
-    options?: Options,
+    options?: Exact<RouteOptions<Injects>, Options>,
   ): RouteDefinition<`${MetaPrefix<M>}${Path}`, Result>
 }
