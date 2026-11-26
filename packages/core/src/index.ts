@@ -1,4 +1,8 @@
+export * from './app.ts'
+export * from './context.ts'
 export * from './inject.ts'
 export * from './meta.ts'
 export * from './provide.ts'
+export * from './registry.ts'
+export * from './schema.ts'
 export type * from './types/index.ts'

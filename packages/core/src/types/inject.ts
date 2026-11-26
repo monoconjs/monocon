@@ -5,7 +5,7 @@ export type Injects = Provides
 
 export interface InjectRegistry {
   __global?: true
-  readonly [key: string]: AnyProvideLike | true | undefined
+  [key: string]: AnyProvideLike | true | undefined
 }
 
 // oxlint-disable-next-line no-shadow

@@ -12,4 +12,5 @@ declare global {
   const del: RouteBuilder
   const head: RouteBuilder
   const options: RouteBuilder
+  const all: RouteBuilder
 }
