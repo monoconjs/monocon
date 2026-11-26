@@ -64,6 +64,24 @@ export const INJECTS = { auth: { beforeHandle: () => ({ user: 'admin' }) } }`,
     expect(result.globalModule?.relativePath).toBe('src/injects/global.ts')
   })
 
+  it('collects exported route calls with their module prefixes', async () => {
+    const root = await createProject({
+      'src/routes/users.ts': `export const META = { prefix: '/api/users' } as const
+export const getUser = get('/:id', () => ({}))
+const list = post('/', () => ({}))
+export { list }
+export const helper = () => get('/ignored', () => ({}))`,
+    })
+    const file = join(root, 'src/routes/users.ts')
+
+    const result = await analyzeSources([file], root)
+
+    expect(result.routes).toEqual([
+      { file, name: 'list', method: 'post', path: '/api/users/' },
+      { file, name: 'getUser', method: 'get', path: '/api/users/:id' },
+    ])
+  })
+
   it('supports named re-exports', async () => {
     const root = await createProject({
       'src/routes/users.ts': `const META = { prefix: '/api' }

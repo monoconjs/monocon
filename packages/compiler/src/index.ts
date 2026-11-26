@@ -1,4 +1,10 @@
-export { analyzeSources, expandEntries, type AnalyzeResult, type SourceModule } from './analyze.ts'
+export {
+  analyzeSources,
+  expandEntries,
+  type AnalyzeResult,
+  type RouteInfo,
+  type SourceModule,
+} from './analyze.ts'
 export { build, type BuildResult } from './build.ts'
 export {
   defineConfig,
