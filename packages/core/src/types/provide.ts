@@ -40,6 +40,13 @@ export type ResolveProvide<Provide> = Provide extends (...args: any[]) => infer 
   ? Result
   : Provide
 
+export type SchemaOptionsOf<Provide> =
+  ResolveProvide<Provide> extends {
+    readonly schema?: infer Options extends SchemaOptions
+  }
+    ? Options
+    : {}
+
 export type ProvidedBy<Provide> = Provide extends { beforeHandle?: infer Hook }
   ? Hook extends (...args: any[]) => any
     ? ProvidedOfHook<Hook>

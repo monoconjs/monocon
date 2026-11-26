@@ -33,3 +33,6 @@ export type HasRequiredKey<T> = keyof T extends never
 export type OmitIndexSignature<T> = {
   [K in keyof T as {} extends Record<K, never> ? never : K]: T[K]
 }
+
+export type Exact<Allowed, Incoming> =
+  Exclude<keyof Incoming, keyof Allowed> extends never ? Incoming : Allowed
