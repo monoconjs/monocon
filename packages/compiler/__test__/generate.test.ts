@@ -47,6 +47,32 @@ describe('generateDeclarations', () => {
     )
   })
 
+  it('collects routes into a global record keyed by path and method', () => {
+    const result: AnalyzeResult = {
+      modules: [
+        {
+          file: source,
+          relativePath: 'src/routes/users.ts',
+          hasMeta: true,
+          hasInjects: false,
+          hasGlobalInject: false,
+        },
+      ],
+      routes: [
+        { file: source, name: 'getUser', method: 'get', path: '/api/users/:id' },
+        { file: source, name: 'createUser', method: 'post', path: '/api/users/' },
+      ],
+    }
+
+    const declaration = generateDeclarations(result, config)[0]?.content
+
+    expect(declaration).toContain('declare global {')
+    expect(declaration).toContain('interface RouteRecords {')
+    expect(declaration).toContain('"/api/users/:id": {')
+    expect(declaration).toContain('get: typeof SOURCE.getUser')
+    expect(declaration).toContain('post: typeof SOURCE.createUser')
+  })
+
   it('merges the global inject source into every module', () => {
     const result: AnalyzeResult = {
       modules: [

@@ -1,6 +1,6 @@
 import { basename, relative, resolve, sep } from 'node:path'
 
-import type { AnalyzeResult, SourceModule } from './analyze.ts'
+import type { AnalyzeResult, RouteInfo, SourceModule } from './analyze.ts'
 import type { LoadedConfig } from './config.ts'
 
 export interface GeneratedFile {
@@ -30,6 +30,7 @@ export function generateDeclarations(result: AnalyzeResult, config: LoadedConfig
     const declarations = METHODS.map(
       (method) => `  const ${method}: RouteBuilder<Meta, Injects>`,
     ).join('\n')
+    const routes = (result.routes ?? []).filter((route) => route.file === module.file)
 
     const content = [
       ...imports,
@@ -41,6 +42,7 @@ export function generateDeclarations(result: AnalyzeResult, config: LoadedConfig
       `declare module '${source}' {`,
       declarations,
       '}',
+      ...renderRouteRecords(routes),
       '',
     ].join('\n')
 
@@ -61,6 +63,29 @@ export function generateDeclarations(result: AnalyzeResult, config: LoadedConfig
       content: references.length === 0 ? '' : `${references.join('\n')}\n`,
     },
   ]
+}
+
+function renderRouteRecords(routes: RouteInfo[]): string[] {
+  if (routes.length === 0) return []
+
+  const groups = new Map<string, Map<string, string>>()
+  for (const route of routes) {
+    let methods = groups.get(route.path)
+    if (methods === undefined) {
+      methods = new Map()
+      groups.set(route.path, methods)
+    }
+    methods.set(route.method, `      ${route.method}: typeof SOURCE.${route.name}`)
+  }
+
+  const lines = ['declare global {', '  interface RouteRecords {']
+  for (const [path, methods] of groups) {
+    lines.push(`    ${JSON.stringify(path)}: {`)
+    for (const method of methods.values()) lines.push(method)
+    lines.push('    }')
+  }
+  lines.push('  }', '}')
+  return lines
 }
 
 function globalSpecifier(
