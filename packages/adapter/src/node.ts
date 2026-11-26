@@ -1,24 +1,24 @@
 import {
   createServer as createHttpServer,
   type IncomingMessage,
-  type Server,
+  type Server as HttpServer,
   type ServerResponse,
 } from 'node:http'
 
-import type { App } from './app.ts'
+import type { App } from '@monocon/core'
 
 export interface ServeOptions {
   readonly host?: string
   readonly port?: number
 }
 
-export function createServer(app: App): Server {
+export function createServer(app: App): HttpServer {
   return createHttpServer((request, response) => {
     void handleRequest(app, request, response)
   })
 }
 
-export async function serve(app: App, options: ServeOptions = {}): Promise<Server> {
+export async function serve(app: App, options: ServeOptions = {}): Promise<HttpServer> {
   const server = createServer(app)
   const port = options.port ?? 3000
 
