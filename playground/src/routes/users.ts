@@ -1,3 +1,4 @@
+import { inject } from 'monocon'
 import { z } from 'zod'
 
 export const META = {
@@ -5,11 +6,11 @@ export const META = {
   summary: 'User routes',
 } as const satisfies Meta
 
-export const INJECTS = {
+export const INJECTS = inject({
   tenant: {
     beforeHandle: () => ({ tenantId: 'tenant-1' }),
   },
-}
+})
 
 export const getUser = get(
   '/:id',
