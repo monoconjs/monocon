@@ -15,3 +15,4 @@ export {
   type MonoconConfig,
 } from './config.ts'
 export { generateDeclarations, type GeneratedFile } from './generate.ts'
+export { createLogger, logger, type TagStyle } from './logger.ts'

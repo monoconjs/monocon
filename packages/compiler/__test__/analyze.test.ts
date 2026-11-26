@@ -82,6 +82,17 @@ export const helper = () => get('/ignored', () => ({}))`,
     ])
   })
 
+  it('rejects multiple global inject sources with wrapped flags', async () => {
+    const root = await createProject({
+      'src/a.ts': 'export const INJECTS = { __global: true as const }',
+      'src/b.ts': 'export const INJECTS = { __global: (true) } satisfies object',
+    })
+
+    await expect(
+      analyzeSources([join(root, 'src/a.ts'), join(root, 'src/b.ts')], root),
+    ).rejects.toThrow('Multiple global INJECTS found')
+  })
+
   it('supports named re-exports', async () => {
     const root = await createProject({
       'src/routes/users.ts': `const META = { prefix: '/api' }
