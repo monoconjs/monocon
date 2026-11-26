@@ -49,6 +49,16 @@
         "types": "./dist/globals.d.ts",
         "default": "./dist/globals.js"
       }
+    },
+    "./node": {
+      "import": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "require": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      }
     }
   },
   "scripts": {
@@ -62,7 +72,7 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "dev": "pnpm --filter @monocon/playground generate",
+    "dev": "pnpm --filter @monocon/playground dev",
     "playground:generate": "pnpm --filter @monocon/playground generate",
     "playground:typecheck": "pnpm --filter @monocon/playground typecheck",
     "prepare": "husky"
