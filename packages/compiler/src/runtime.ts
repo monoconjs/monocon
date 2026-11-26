@@ -123,6 +123,7 @@ export function generateRuntime(result: AnalyzeResult, config: LoadedConfig): Ge
       path: resolve(config.outDir, 'app.ts'),
       content: [
         ...HEADER,
+        '/// <reference path="./index.d.ts" />',
         '',
         ...imports,
         '',
@@ -141,6 +142,20 @@ export function generateRuntime(result: AnalyzeResult, config: LoadedConfig): Ge
         'export const app = createApp()',
         '',
       ].join('\n'),
+    },
+    {
+      path: resolve(config.outDir, 'tsconfig.json'),
+      content: `${JSON.stringify(
+        {
+          compilerOptions: {
+            paths: {
+              'monocon/app': ['./app.ts'],
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
     },
   ]
 }
