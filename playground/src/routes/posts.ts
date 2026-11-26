@@ -1,9 +1,10 @@
+import { meta } from 'monocon'
 import { z } from 'zod'
 
-export const META = {
+export const META = meta({
   prefix: '/api/posts',
   summary: 'Post routes',
-} as const satisfies Meta
+})
 
 export const listPosts = get(
   '/',

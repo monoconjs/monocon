@@ -1,10 +1,10 @@
-import { inject } from 'monocon'
+import { inject, meta } from 'monocon'
 import { z } from 'zod'
 
-export const META = {
+export const META = meta({
   prefix: '/api/users',
   summary: 'User routes',
-} as const satisfies Meta
+})
 
 export const INJECTS = inject({
   tenant: {
