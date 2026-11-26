@@ -75,7 +75,7 @@
     "build": "pnpm --filter @monocon/core build && pnpm --filter @monocon/adapter build && pnpm --filter @monocon/compiler build && tsdown",
     "check:package": "publint && attw --pack .",
     "typecheck": "tsc --noEmit && pnpm -r typecheck",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
     "lint": "oxlint",

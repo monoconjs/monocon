@@ -37,10 +37,11 @@ export async function createContext(options: CreateContextOptions): Promise<Runt
   const { request, url, schemas } = options
 
   const headers = new Headers(request.headers)
-  const parsedHeaders = await validateSchema(
-    schemas.headers,
-    Object.fromEntries(request.headers.entries()),
-  )
+  const requestHeaders: Record<string, string> = {}
+  request.headers.forEach((value, name) => {
+    requestHeaders[name] = value
+  })
+  const parsedHeaders = await validateSchema(schemas.headers, requestHeaders)
   if (isRecord(parsedHeaders)) {
     for (const [name, value] of Object.entries(parsedHeaders)) {
       Object.defineProperty(headers, name, {
