@@ -8,6 +8,7 @@ import type {
   RouteBuilder,
   RouteMeta,
 } from '@monocon/core'
+import { defineInject } from '@monocon/core'
 import { z } from 'zod'
 
 const auth = {
@@ -45,6 +46,23 @@ describe('core types', () => {
     expectTypeOf<InjectContext<{ auth: typeof auth }>>().toEqualTypeOf<{ user: string }>()
     expectTypeOf<InjectContext<{ auth: typeof authFactory }>>().toEqualTypeOf<{ user: string }>()
     expectTypeOf<Context<{ user: string }>['user']>().toEqualTypeOf<string>()
+  })
+
+  it('defines injects with inferred context', () => {
+    const defined = defineInject(() => ({
+      beforeHandle: (ctx) => {
+        expectTypeOf(ctx.req).toEqualTypeOf<Request>()
+        return { user: 'admin' }
+      },
+    }))
+
+    expectTypeOf<InjectContext<{ defined: typeof defined }>>().toEqualTypeOf<{ user: string }>()
+
+    const definedHooks = defineInject({ beforeHandle: () => ({ tenantId: 'tenant-1' }) })
+
+    expectTypeOf<InjectContext<{ definedHooks: typeof definedHooks }>>().toEqualTypeOf<{
+      tenantId: string
+    }>()
   })
 
   it('infers route context and path', () => {
