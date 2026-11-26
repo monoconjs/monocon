@@ -8,7 +8,7 @@ export interface GeneratedFile {
   content: string
 }
 
-const METHODS = ['get', 'post', 'put', 'patch', 'del', 'head', 'options']
+const METHODS = ['get', 'post', 'put', 'patch', 'del', 'head', 'options', 'all']
 
 export function generateDeclarations(result: AnalyzeResult, config: LoadedConfig): GeneratedFile[] {
   const modulesDir = resolve(config.outDir, 'modules')

@@ -4,6 +4,7 @@ import { basename, dirname, isAbsolute, relative, resolve } from 'node:path'
 import { analyzeSources, expandEntries } from './analyze.ts'
 import { loadConfig } from './config.ts'
 import { generateDeclarations, type GeneratedFile } from './generate.ts'
+import { generateRuntime } from './runtime.ts'
 
 export interface BuildResult {
   files: string[]
@@ -15,7 +16,7 @@ export async function build(configPath?: string): Promise<BuildResult> {
   const entries = await expandEntries(config.entry, config.rootDir)
   const sources = entries.filter((file) => !isInside(file, config.outDir))
   const analysis = await analyzeSources(sources, config.rootDir)
-  const files = generateDeclarations(analysis, config)
+  const files = [...generateDeclarations(analysis, config), ...generateRuntime(analysis, config)]
 
   await writeGenerated(files, config.outDir)
 
