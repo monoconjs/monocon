@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "generate": "monocon monocon.config.ts",
-    "typecheck": "pnpm generate && tsc --noEmit"
+    "typecheck": "pnpm generate && tsc --noEmit",
+    "dev": "pnpm generate && node --experimental-strip-types src/server.ts"
   },
   "dependencies": {
     "monocon": "workspace:*",
