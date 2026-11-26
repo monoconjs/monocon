@@ -6,6 +6,10 @@ import type { Meta, MetaPrefix, RouteMeta } from './meta.ts'
 import type { PathParams } from './path.ts'
 import type { InferOutput, Schema } from './schema.ts'
 
+declare global {
+  interface RouteRecords {}
+}
+
 export interface SchemaOptions {
   params?: Schema
   query?: Schema

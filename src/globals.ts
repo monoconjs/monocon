@@ -5,8 +5,6 @@ type BaseMeta = CoreMeta
 declare global {
   interface Meta extends BaseMeta {}
 
-  interface RouteRecords {}
-
   const get: RouteBuilder
   const post: RouteBuilder
   const put: RouteBuilder
