@@ -1,6 +1,5 @@
+import { app } from 'monocon/app'
 import { serve } from 'monocon/node'
-
-import { app } from '../.monocon/app.ts'
 
 const port = 3000
 const server = await serve(app, { port })
