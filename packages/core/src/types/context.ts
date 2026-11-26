@@ -31,7 +31,7 @@ export interface ContextBase<
   readonly json: (data: Output, init?: number | ResponseInit) => Response
   readonly text: (body: string, init?: number | ResponseInit) => Response
   readonly html: (body: string, init?: number | ResponseInit) => Response
-  readonly redirect: (location: string, status?: number) => Response
+  readonly redirect: (location: keyof RouteRecords, status?: number) => Response
 }
 
 export type Context<

@@ -21,6 +21,12 @@ const authFactory = () => ({
 
 declare const get: RouteBuilder<{ prefix: '/api' }, { auth: typeof auth }>
 
+declare global {
+  interface RouteRecords {
+    '/api/users/:id': { get: unknown }
+  }
+}
+
 describe('core types', () => {
   it('infers path params', () => {
     expectTypeOf<PathParams<'/users/:id/posts/:postId'>>().toEqualTypeOf<{
@@ -75,6 +81,7 @@ describe('core types', () => {
         expectTypeOf(ctx.user).toEqualTypeOf<string>()
         expectTypeOf(ctx.meta).toEqualTypeOf<{ tag: string }>()
         expectTypeOf(ctx.json({ ok: true })).toEqualTypeOf<Response>()
+        expectTypeOf(ctx.redirect).parameter(0).toEqualTypeOf<'/api/users/:id'>()
         return { ok: true }
       },
       { query: z.object({ page: z.coerce.number() }), meta: { tag: 'user' } },
