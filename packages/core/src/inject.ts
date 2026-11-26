@@ -1,9 +1,5 @@
-import type { InjectHooks, InjectLike } from './types/inject.ts'
+import type { InjectRegistry } from './types/inject.ts'
 
-export function defineInject<Hooks extends InjectHooks>(hooks: Hooks): Hooks
-export function defineInject<Factory extends (...args: any[]) => InjectHooks>(
-  factory: Factory,
-): Factory
-export function defineInject(value: InjectLike): InjectLike {
-  return value
+export function inject<const Registry extends InjectRegistry>(registry: Registry): Registry {
+  return registry
 }

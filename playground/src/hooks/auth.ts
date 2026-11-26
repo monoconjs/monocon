@@ -1,5 +1,5 @@
-import { defineInject } from 'monocon'
+import { provide } from 'monocon'
 
-export const auth = defineInject(() => ({
+export const auth = provide(() => ({
   beforeHandle: () => ({ user: 'admin' }),
 }))

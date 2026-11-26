@@ -1,14 +1,14 @@
 import type {
   Context,
-  InjectContext,
   Meta,
   MetaPrefix,
   PathParams,
+  InjectContext,
   ProvidedOfHook,
   RouteBuilder,
   RouteMeta,
 } from '@monocon/core'
-import { defineInject } from '@monocon/core'
+import { inject, provide } from '@monocon/core'
 import { z } from 'zod'
 
 const auth = {
@@ -54,8 +54,8 @@ describe('core types', () => {
     expectTypeOf<Context<{ user: string }>['user']>().toEqualTypeOf<string>()
   })
 
-  it('defines injects with inferred context', () => {
-    const defined = defineInject(() => ({
+  it('defines providers with inferred context', () => {
+    const defined = provide(() => ({
       beforeHandle: (ctx) => {
         expectTypeOf(ctx.req).toEqualTypeOf<Request>()
         return { user: 'admin' }
@@ -64,11 +64,26 @@ describe('core types', () => {
 
     expectTypeOf<InjectContext<{ defined: typeof defined }>>().toEqualTypeOf<{ user: string }>()
 
-    const definedHooks = defineInject({ beforeHandle: () => ({ tenantId: 'tenant-1' }) })
+    const definedHooks = provide({ beforeHandle: () => ({ tenantId: 'tenant-1' }) })
 
     expectTypeOf<InjectContext<{ definedHooks: typeof definedHooks }>>().toEqualTypeOf<{
       tenantId: string
     }>()
+  })
+
+  it('creates type-safe inject registries', () => {
+    const registry = inject({
+      __global: true,
+      auth: provide(() => ({ beforeHandle: () => ({ user: 'admin' }) })),
+    })
+
+    expectTypeOf(registry.__global).toEqualTypeOf<true>()
+    expectTypeOf<InjectContext<Omit<typeof registry, '__global'>>>().toEqualTypeOf<{
+      user: string
+    }>()
+
+    // @ts-expect-error registry values must be providers
+    inject({ invalid: 1 })
   })
 
   it('infers route context and path', () => {
@@ -110,7 +125,7 @@ describe('core types', () => {
     )
   })
 
-  it('allows disabling an inject', () => {
+  it('allows disabling a provider', () => {
     get(
       '/private',
       (ctx) => {
