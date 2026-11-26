@@ -1,7 +1,16 @@
-import type { ProvideHooks, ProvideLike } from './types/provide.ts'
+import type { ProvideHooks } from './types/provide.ts'
+import type { SchemaOptions } from './types/schema.ts'
 
-export function provide<Hooks extends ProvideHooks>(hooks: Hooks): Hooks
-export function provide<Factory extends (...args: any[]) => ProvideHooks>(factory: Factory): Factory
-export function provide(value: ProvideLike): ProvideLike {
+export function provide<
+  const Options extends SchemaOptions,
+  Hooks extends ProvideHooks<Options>,
+  Args extends any[],
+>(factory: (...args: Args) => Hooks & { readonly schema?: Options }): (...args: Args) => Hooks
+
+export function provide<const Options extends SchemaOptions, Hooks extends ProvideHooks<Options>>(
+  hooks: Hooks & { readonly schema?: Options },
+): Hooks
+
+export function provide(value: any): any {
   return value
 }

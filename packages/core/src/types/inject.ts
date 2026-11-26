@@ -1,11 +1,11 @@
 import type { Simplify, UnionToIntersection } from './_utils.ts'
-import type { ProvideLike, ProvidedBy, Provides, ResolveProvide } from './provide.ts'
+import type { AnyProvideLike, ProvidedBy, Provides, ResolveProvide } from './provide.ts'
 
 export type Injects = Provides
 
 export interface InjectRegistry {
   __global?: true
-  readonly [key: string]: ProvideLike | true | undefined
+  readonly [key: string]: AnyProvideLike | true | undefined
 }
 
 // oxlint-disable-next-line no-shadow

@@ -78,6 +78,41 @@ describe('core types', () => {
     }>()
   })
 
+  it('infers hook context from the hook schema', () => {
+    const hook = provide({
+      schema: {
+        headers: z.object({ authorization: z.string() }),
+        query: z.object({ page: z.coerce.number() }),
+        response: z.object({ ok: z.boolean() }),
+      },
+      beforeHandle: (ctx) => {
+        expectTypeOf(ctx.headers.authorization).toEqualTypeOf<string>()
+        expectTypeOf(ctx.query.page).toEqualTypeOf<number>()
+        return { user: 'admin' }
+      },
+      afterHandle: (ctx, result) => {
+        expectTypeOf(ctx.headers.authorization).toEqualTypeOf<string>()
+        expectTypeOf(result).toEqualTypeOf<{ ok: boolean } | Response>()
+        return result
+      },
+    })
+
+    expectTypeOf<InjectContext<{ hook: typeof hook }>>().toEqualTypeOf<{ user: string }>()
+    inject({ hook })
+  })
+
+  it('infers factory hook context from the hook schema', () => {
+    const factory = provide(() => ({
+      schema: { body: z.object({ token: z.string() }) },
+      beforeHandle: (ctx) => {
+        expectTypeOf(ctx.body.token).toEqualTypeOf<string>()
+        return { user: 'admin' }
+      },
+    }))
+
+    expectTypeOf<InjectContext<{ factory: typeof factory }>>().toEqualTypeOf<{ user: string }>()
+  })
+
   it('creates type-safe inject registries', () => {
     const registry = inject({
       __global: true,

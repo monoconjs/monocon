@@ -1,19 +1,40 @@
 import type { MaybePromise, ProvidedOfHook } from './_utils.ts'
-import type { Context, JsonValue } from './context.ts'
-import type { Schema } from './schema.ts'
+import type { ResponseOutput, SchemaContext, SchemaOptions } from './schema.ts'
 
-export interface ProvideHooks<Provided extends object = {}> {
-  readonly beforeHandle?: (ctx: Context<Provided>) => MaybePromise<object | Response | void>
+export type ProvideContext<Options, Provided extends object = {}> = SchemaContext<Options, Provided>
+
+export interface ProvideHooks<
+  Options extends SchemaOptions = SchemaOptions,
+  Provided extends object = {},
+> {
+  readonly schema?: Options
+  readonly beforeHandle?: (
+    ctx: ProvideContext<Options, Provided>,
+  ) => MaybePromise<object | Response | void>
   readonly afterHandle?: (
-    ctx: Context<Provided>,
-    result: JsonValue | Response,
-  ) => MaybePromise<JsonValue | Response | void>
-  readonly onError?: (error: unknown, ctx: Context<Provided>) => MaybePromise<Response | void>
-  readonly schema?: Schema
+    ctx: ProvideContext<Options, Provided>,
+    result: ResponseOutput<Options> | Response,
+  ) => MaybePromise<ResponseOutput<Options> | Response | void>
+  readonly onError?: (
+    error: unknown,
+    ctx: ProvideContext<Options, Provided>,
+  ) => MaybePromise<Response | void>
 }
 
-export type ProvideLike = ProvideHooks | ((...args: any[]) => ProvideHooks)
-export type Provides = Record<string, ProvideLike>
+export type ProvideLike<Options extends SchemaOptions = SchemaOptions> =
+  | ProvideHooks<Options>
+  | ((...args: any[]) => ProvideHooks<Options>)
+
+export type AnyProvideHooks = {
+  readonly schema?: SchemaOptions
+  readonly beforeHandle?: (...args: any[]) => any
+  readonly afterHandle?: (...args: any[]) => any
+  readonly onError?: (...args: any[]) => any
+}
+
+export type AnyProvideLike = AnyProvideHooks | ((...args: any[]) => AnyProvideHooks)
+
+export type Provides = Record<string, AnyProvideLike>
 
 export type ResolveProvide<Provide> = Provide extends (...args: any[]) => infer Result
   ? Result
