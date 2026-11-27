@@ -1,5 +1,5 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
-import { basename, dirname, isAbsolute, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
 
 import { analyzeSources, expandEntries } from './analyze.ts'
 import { loadConfig } from './config.ts'
@@ -28,7 +28,9 @@ export async function build(configPath?: string): Promise<BuildResult> {
 
 function isInside(file: string, directory: string): boolean {
   const path = relative(directory, file)
-  return !isAbsolute(path) && path !== '..' && !path.startsWith('../')
+  return (
+    !isAbsolute(path) && path !== '..' && !path.startsWith(`..${sep}`) && !path.startsWith('../')
+  )
 }
 
 async function writeGenerated(files: GeneratedFile[], outDir: string): Promise<void> {
