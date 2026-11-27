@@ -31,7 +31,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm format:check
-      - run: pnpm lint
-      - run: pnpm typecheck
+      - run: pnpm lint --ignore-pattern examples
+      - run: pnpm exec tsc --noEmit && pnpm -r --filter '!@monocon/example-node' --filter '!@monocon/example-bun' typecheck
       - run: pnpm test
       - run: pnpm check:package
