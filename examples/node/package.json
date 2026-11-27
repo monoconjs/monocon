@@ -1,18 +1,19 @@
 {
-  "name": "@monocon/playground",
+  "name": "@monocon/example-node",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "generate": "monocon monocon.config.ts",
     "typecheck": "pnpm generate && tsc --noEmit",
-    "dev": "pnpm generate && node --experimental-strip-types src/server.ts"
+    "dev": "pnpm generate && tsx src/server.ts"
   },
   "dependencies": {
     "monocon": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@monocon/config": "workspace:*"
+    "@monocon/config": "workspace:*",
+    "tsx": "^4.23.15"
   }
 }
