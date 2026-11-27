@@ -1,7 +1,10 @@
 {
-  "extends": ["@monocon/config/tsconfig.json", "./.monocon/tsconfig.json"],
+  "extends": "@monocon/config/tsconfig.json",
   "compilerOptions": {
-    "types": ["node", "monocon/globals"]
+    "types": ["node", "monocon/globals"],
+    "paths": {
+      "monocon/app": ["./.monocon/app.ts"]
+    }
   },
   "include": ["src"]
 }
