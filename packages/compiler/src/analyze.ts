@@ -1,5 +1,5 @@
 import { readFile, stat } from 'node:fs/promises'
-import { relative, resolve, sep } from 'node:path'
+import { isAbsolute, relative, resolve, sep } from 'node:path'
 
 import { glob } from 'tinyglobby'
 import * as ts from 'typescript'
@@ -36,7 +36,10 @@ export async function expandEntries(patterns: string[], rootDir: string): Promis
         return isFile ? [file] : []
       }
 
-      return glob(pattern.replaceAll('\\', '/'), {
+      const normalized = isAbsolute(pattern)
+        ? relative(rootDir, pattern).split(sep).join('/')
+        : pattern
+      return glob(normalized.replaceAll('\\', '/'), {
         absolute: true,
         cwd: rootDir,
         onlyFiles: true,

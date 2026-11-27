@@ -1,6 +1,6 @@
 import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, relative, sep } from 'node:path'
 
 import { describe, expect, it } from 'vitest'
 
@@ -28,7 +28,7 @@ describe('expandEntries', () => {
 
     const files = await expandEntries(['src/**/*.ts', 'src/missing.ts'], root)
 
-    expect(files.map((file) => file.replace(`${root}/`, ''))).toEqual([
+    expect(files.map((file) => relative(root, file).split(sep).join('/'))).toEqual([
       'src/other.ts',
       'src/routes/posts.ts',
       'src/routes/users.ts',
