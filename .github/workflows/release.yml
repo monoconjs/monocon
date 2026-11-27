@@ -40,7 +40,7 @@ jobs:
       - run: pnpm lint --ignore-pattern examples
       - run: pnpm exec tsc --noEmit && pnpm -r --filter '!@monocon/example-node' --filter '!@monocon/example-bun' typecheck
       - run: pnpm test
-      - run: pnpm check:package
+      - run: pnpm check:package --profile esm-only
       - run: pnpm exec attw --pack packages/core --profile esm-only
       - run: pnpm exec attw --pack packages/compiler --profile esm-only
       - run: pnpm exec attw --pack packages/adapter --profile esm-only
