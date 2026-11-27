@@ -82,9 +82,10 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "dev": "pnpm --filter @monocon/playground dev",
-    "playground:generate": "pnpm --filter @monocon/playground generate",
-    "playground:typecheck": "pnpm --filter @monocon/playground typecheck",
+    "examples:dev:node": "pnpm --filter @monocon/example-node dev",
+    "examples:dev:bun": "pnpm --filter @monocon/example-bun dev",
+    "examples:generate": "pnpm --filter './examples/*' generate",
+    "examples:typecheck": "pnpm --filter './examples/*' typecheck",
     "prepare": "husky"
   },
   "dependencies": {
