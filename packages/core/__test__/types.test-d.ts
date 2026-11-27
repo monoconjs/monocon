@@ -7,9 +7,21 @@ import type {
   ProvidedOfHook,
   RouteBuilder,
   RouteMeta,
+  StandardSchemaV1,
 } from '@monocon/core'
 import { inject, meta, provide } from '@monocon/core'
 import { z } from 'zod'
+
+function createSchema<Output>(): StandardSchemaV1<unknown, Output> {
+  return {
+    '~standard': {
+      version: 1,
+      vendor: 'test',
+      types: undefined,
+      validate: (value) => ({ value: value as Output }),
+    },
+  }
+}
 
 const auth = {
   beforeHandle: () => ({ user: 'admin' }),
@@ -205,6 +217,21 @@ describe('core types', () => {
         return { ok: true }
       },
       { body: z.object({ name: z.string() }) },
+    )
+  })
+
+  it('infers standard schema options without zod', () => {
+    get(
+      '/standard',
+      (ctx) => {
+        expectTypeOf(ctx.query.page).toEqualTypeOf<number>()
+        expectTypeOf(ctx.body.name).toEqualTypeOf<string>()
+        return { ok: true }
+      },
+      {
+        query: createSchema<{ page: number }>(),
+        body: createSchema<{ name: string }>(),
+      },
     )
   })
 

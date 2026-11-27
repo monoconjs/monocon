@@ -30,10 +30,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^4.6.7"
+    "@standard-schema/spec": "^1.1.0"
   },
   "devDependencies": {
-    "@monocon/config": "workspace:*"
+    "@monocon/config": "workspace:*",
+    "zod": "^4.6.7"
   },
   "engines": {
     "node": ">=22"

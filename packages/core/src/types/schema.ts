@@ -1,32 +1,17 @@
-import type { output as ZodOutput, ZodType } from 'zod'
+import type { StandardSchemaV1 } from '@standard-schema/spec'
 
-import type { MaybePromise, Merge } from './_utils.ts'
+import type { Merge } from './_utils.ts'
 import type { Context, JsonValue } from './context.ts'
 
-export interface StandardSchemaIssue {
-  readonly message: string
-  readonly path?: readonly unknown[]
-}
+export type StandardSchema<Output = unknown> = StandardSchemaV1<unknown, Output>
+export type StandardSchemaIssue = StandardSchemaV1.Issue
+export type StandardSchemaResult<Output> = StandardSchemaV1.Result<Output>
 
-export type StandardSchemaResult<Output> =
-  | { readonly value: Output }
-  | { readonly issues: readonly StandardSchemaIssue[] }
+export type Schema = StandardSchemaV1
 
-export interface StandardSchema<Output = unknown> {
-  readonly '~standard': {
-    readonly version: 1
-    readonly vendor: string
-    readonly validate: (value: unknown) => MaybePromise<StandardSchemaResult<Output>>
-  }
-}
-
-export type Schema = ZodType | StandardSchema
-
-export type InferOutput<SchemaInput> = SchemaInput extends ZodType
-  ? ZodOutput<SchemaInput>
-  : SchemaInput extends StandardSchema<infer Output>
-    ? Output
-    : unknown
+export type InferOutput<S> = S extends Schema
+  ? NonNullable<S['~standard']['types']>['output']
+  : unknown
 
 export interface SchemaOptions {
   params?: Schema
